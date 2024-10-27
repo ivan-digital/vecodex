@@ -51,21 +51,33 @@ if(APPLE)
 elseif(UNIX)
     message(STATUS "Configuring for Linux/Ubuntu")
 
-    # Optionally, specify compilers if different from the system defaults
-    # set(CMAKE_C_COMPILER "/usr/bin/gcc")
-    # set(CMAKE_CXX_COMPILER "/usr/bin/g++")
-
     # Include directories
     include_directories(
         "/usr/include"
         "${PROJECT_SOURCE_DIR}/include"
     )
 
-    # Link directories (if libraries are in non-standard locations, specify them here
-    # Example:
-    # link_directories("/usr/local/lib")
-    # link_directories("/opt/openblas/lib")
-    # Adjust as necessary based on your Linux environment
+    # Manually specify OpenBLAS paths for Linux/Ubuntu
+    include_directories("/usr/include/openblas")  # Include OpenBLAS directory manually
+    find_library(OpenBLAS_LIBRARIES NAMES openblas PATHS /usr/lib /usr/lib/x86_64-linux-gnu)
+
+    if(OpenBLAS_LIBRARIES)
+        message(STATUS "Found OpenBLAS: ${OpenBLAS_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "OpenBLAS not found")
+    endif()
+
+    # Link pthread explicitly if needed
+    target_link_libraries(vecodex-index PRIVATE pthread)
+    target_link_libraries(VecodexIndexTest PRIVATE pthread)
+
+    # Set Linux specific compile options
+    target_compile_options(vecodex-index PRIVATE -Wall -Wextra -fPIC)
+    target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
+
+    # Set rpath for dynamic libraries if necessary
+    set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+    set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
 
 # Common configurations
@@ -83,15 +95,6 @@ endif()
 
 # Threading
 find_package(Threads REQUIRED)
-
-# Find OpenBLAS
-find_package(OpenBLAS REQUIRED)
-
-if(OpenBLAS_FOUND)
-    message(STATUS "Found OpenBLAS: ${OpenBLAS_LIBRARIES}")
-else()
-    message(FATAL_ERROR "OpenBLAS not found")
-endif()
 
 # FAISS Configuration
 # Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables
@@ -126,13 +129,11 @@ add_library(vecodex-index
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # Link Libraries
-# Replace OpenBLAS::OpenBLAS with ${OpenBLAS_LIBRARIES}
 target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 
-# Replace OpenBLAS::OpenBLAS with ${OpenBLAS_LIBRARIES}
 target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Additional macOS-specific settings
