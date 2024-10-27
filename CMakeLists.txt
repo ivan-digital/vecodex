@@ -50,7 +50,7 @@ elseif(UNIX)
     )
 
     # Manually specify OpenBLAS paths for Linux/Ubuntu
-    include_directories("/usr/include/openblas")  # Include OpenBLAS directory manually
+    include_directories("/usr/include/openblas")
     find_library(OpenBLAS_LIBRARIES NAMES openblas PATHS /usr/lib /usr/lib/x86_64-linux-gnu)
 
     if(OpenBLAS_LIBRARIES)
