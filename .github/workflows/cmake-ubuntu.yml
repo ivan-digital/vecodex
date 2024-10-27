@@ -16,7 +16,14 @@ jobs:
         os: [ macos-latest, ubuntu-latest ]
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true  # Ensure submodules are checked out
+
+    - name: Setup Submodules
+      run: |
+        git submodule update --init --recursive
 
     - name: Install Dependencies (macOS)
       if: runner.os == 'macOS'
