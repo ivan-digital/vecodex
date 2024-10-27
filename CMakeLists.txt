@@ -104,6 +104,10 @@ endif()
 
 include_directories(external/googletest/googletest/include)
 
+# Find Google Test package if available in the system
+find_package(GTest REQUIRED)
+include_directories(${GTest_INCLUDE_DIRS})
+
 # Main Library Target
 add_library(vecodex-index
     src/VecodexIndex.cpp
@@ -123,7 +127,7 @@ add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE faiss ${GTest_LIBRARIES} OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
