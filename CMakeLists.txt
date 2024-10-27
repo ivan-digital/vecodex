@@ -127,7 +127,7 @@ add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE faiss GTest::GTest GTest::Main gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE faiss GTest::GTest GTest::Main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
