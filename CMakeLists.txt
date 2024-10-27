@@ -104,10 +104,6 @@ endif()
 
 include_directories(external/googletest/googletest/include)
 
-# Find Google Test package if available in the system
-find_package(GTest REQUIRED)
-include_directories(${GTest_INCLUDE_DIRS})
-
 # Main Library Target
 add_library(vecodex-index
     src/VecodexIndex.cpp
