@@ -1,4 +1,4 @@
-name: CI
+name: build
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: true  # Ensure submodules are checked out
+        submodules: true
 
     - name: Setup Submodules
       run: |
