@@ -1,0 +1,89 @@
+# ====================
+# CMake
+# ====================
+# Build directories
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/CMakeScripts/
+/Testing/
+/Makefile
+/cmake_install.cmake
+/install_manifest.txt
+
+# ====================
+# Xcode
+# ====================
+# Xcode project files
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserstate
+*.xcuserdata/
+
+# Xcode build products
+Debug/
+Release/
+EagerLinkingTBDs/
+*.app
+*.dSYM/
+*.ipa
+
+# ====================
+# Compiled Files
+# ====================
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+vecodex-index
+VecodexIndexTest
+
+# ====================
+# Libraries
+# ====================
+lib*.a
+lib*.so
+lib*.dylib
+
+# ====================
+# External Libraries
+# ====================
+external/googletest/build/
+external/faiss/build/
+
+# ====================
+# Temporary Files
+# ====================
+*.swp
+*~
+*.tmp
+*.temp
+
+# ====================
+# Logs
+# ====================
+*.log
+
+# ====================
+# IDE Specific
+# ====================
+.vscode/
+.idea/
+
+# ====================
+# Python Cache (if applicable)
+# ====================
+__pycache__/
+*.py[cod]
+
+# ====================
+# System Files
+# ====================
+.DS_Store
+
+# ====================
+# Other
+# ====================
+
