@@ -102,8 +102,6 @@ if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
 endif()
 
-include_directories(external/googletest/googletest/include)
-
 # Main Library Target
 add_library(vecodex-index
     src/VecodexIndex.cpp
@@ -123,7 +121,7 @@ add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE faiss GTest::GTest GTest::Main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
