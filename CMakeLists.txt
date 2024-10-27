@@ -66,18 +66,6 @@ elseif(UNIX)
     else()
         message(FATAL_ERROR "OpenBLAS not found")
     endif()
-
-    # Link pthread explicitly if needed
-    target_link_libraries(vecodex-index PRIVATE pthread)
-    target_link_libraries(VecodexIndexTest PRIVATE pthread)
-
-    # Set Linux specific compile options
-    target_compile_options(vecodex-index PRIVATE -Wall -Wextra -fPIC)
-    target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
-
-    # Set rpath for dynamic libraries if necessary
-    set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
-    set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
 
 # Common configurations
@@ -128,12 +116,13 @@ add_library(vecodex-index
 
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
-# Link Libraries
-target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
-
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 
+# Link Libraries to Main Library Target
+target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
+
+# Link Libraries to Test Executable
 target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Additional macOS-specific settings
