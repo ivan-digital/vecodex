@@ -2,81 +2,118 @@ cmake_minimum_required(VERSION 3.12)
 
 project(vecodex-index)
 
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(HAVE_POSIX_REGEX 1)
-
-# Compiler settings for macOS
+# Platform-specific configurations
 if(APPLE)
+    message(STATUS "Configuring for macOS")
+
+    # Use Apple Clang
     set(CMAKE_C_COMPILER "/usr/bin/clang")
     set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
+    message(STATUS "Using Apple Clang: ${CMAKE_C_COMPILER} and ${CMAKE_CXX_COMPILER}")
+
     # Get Homebrew prefixes
-    execute_process(COMMAND brew --prefix OUTPUT_VARIABLE HOMEBREW_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND brew --prefix openblas OUTPUT_VARIABLE OPENBLAS_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND brew --prefix faiss OUTPUT_VARIABLE FAISS_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND brew --prefix googletest OUTPUT_VARIABLE GTEST_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    # OpenMP Support for AppleClang
-    set(OPENMP_INCLUDE_DIR "${LIBOMP_PREFIX}/include")
-    set(OPENMP_LIB_DIR "${LIBOMP_PREFIX}/lib")
-    set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
-    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
-    set(OpenMP_C_LIB_NAMES "omp")
-    set(OpenMP_CXX_LIB_NAMES "omp")
-    set(OpenMP_omp_LIBRARY "${OPENMP_LIB_DIR}/libomp.dylib")
-    set(OpenMP_C_LIBRARIES "-L${OPENMP_LIB_DIR} -lomp")
-    set(OpenMP_CXX_LIBRARIES "-L${OPENMP_LIB_DIR} -lomp")
+    # Set CMAKE_PREFIX_PATH to prioritize Homebrew
+    set(CMAKE_PREFIX_PATH
+        "${LIBOMP_PREFIX}"
+        "${OPENBLAS_PREFIX}"
+        "${FAISS_PREFIX}"
+        "${GTEST_PREFIX}"
+        "${CMAKE_PREFIX_PATH}"
+        CACHE STRING "CMake Prefix Path" FORCE)
 
-    include_directories(BEFORE "${OPENMP_INCLUDE_DIR}")
-    add_library(OpenMP::OpenMP_CXX INTERFACE IMPORTED)
-    set_target_properties(OpenMP::OpenMP_CXX PROPERTIES
-        INTERFACE_COMPILE_OPTIONS "${OpenMP_CXX_FLAGS}"
-        INTERFACE_INCLUDE_DIRECTORIES "${OPENMP_INCLUDE_DIR}"
-        INTERFACE_LINK_LIBRARIES "${OpenMP_CXX_LIBRARIES}"
+    # Include directories and library paths
+    include_directories(
+        "${LIBOMP_PREFIX}/include"
+        "${OPENBLAS_PREFIX}/include"
+        "${FAISS_PREFIX}/include"
+        "${GTEST_PREFIX}/include"
+        "${PROJECT_SOURCE_DIR}/include"
     )
 
-    set(Threads_FOUND TRUE CACHE BOOL "" FORCE)
+    link_directories(
+        "${LIBOMP_PREFIX}/lib"
+        "${OPENBLAS_PREFIX}/lib"
+        "${FAISS_PREFIX}/lib"
+        "${GTEST_PREFIX}/lib"
+    )
 
-else()
-    # For non-Apple platforms, use standard GCC or Clang settings
-    find_package(Threads REQUIRED)
-    find_package(OpenMP REQUIRED)
+elseif(UNIX)
+    message(STATUS "Configuring for Linux/Ubuntu")
 
+    # Optionally, specify compilers if different from the system defaults
+    # set(CMAKE_C_COMPILER "/usr/bin/gcc")
+    # set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+
+    # Include directories
+    include_directories(
+        "/usr/include"
+        "${PROJECT_SOURCE_DIR}/include"
+    )
+
+    # Link directories (if libraries are in non-standard locations, specify them here
+    # Example:
+    # link_directories("/usr/local/lib")
+    # link_directories("/opt/openblas/lib")
+    # Adjust as necessary based on your Linux environment
+endif()
+
+# Common configurations
+
+# OpenMP Support
+find_package(OpenMP REQUIRED)
+
+if(OpenMP_FOUND)
+    message(STATUS "Found OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_C_LIBRARIES}")
+else()
+    message(FATAL_ERROR "OpenMP not found")
 endif()
 
-# Link to threading and OpenMP libraries
-set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-set(CMAKE_HAVE_THREADS_LIBRARY 1)
-set(CMAKE_USE_PTHREADS_INIT 1)
-set(THREADS_PREFER_PTHREAD_FLAG ON)
+# Threading
+find_package(Threads REQUIRED)
 
-# OpenBLAS settings
-execute_process(COMMAND brew --prefix openblas OUTPUT_VARIABLE OPENBLAS_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-file(GLOB OPENBLAS_LIBRARIES "${OPENBLAS_PREFIX}/lib/libopenblas*.dylib")
-if(NOT OPENBLAS_LIBRARIES)
-    message(FATAL_ERROR "Could not find OpenBLAS library in ${OPENBLAS_PREFIX}/lib")
+# Find OpenBLAS
+find_package(OpenBLAS REQUIRED)
+
+if(OpenBLAS_FOUND)
+    message(STATUS "Found OpenBLAS: ${OpenBLAS_LIBRARIES}")
+else()
+    message(FATAL_ERROR "OpenBLAS not found")
 endif()
 
-list(GET OPENBLAS_LIBRARIES 0 BLAS_LIBRARIES)
-set(BLAS_FOUND TRUE CACHE BOOL "BLAS found" FORCE)
-set(LAPACK_FOUND TRUE CACHE BOOL "LAPACK found" FORCE)
-set(BLAS_LIBRARIES "${BLAS_LIBRARIES}" CACHE STRING "BLAS libraries" FORCE)
-set(LAPACK_LIBRARIES "${BLAS_LIBRARIES}" CACHE STRING "LAPACK libraries" FORCE)
-
-# Disable Python and GPU support in FAISS
-set(FAISS_ENABLE_PYTHON OFF CACHE BOOL "Disable Python support in FAISS")
-set(FAISS_ENABLE_GPU OFF CACHE BOOL "Disable GPU support in FAISS")
+# FAISS Configuration
+# Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables
+# Ensure FAISS is built from the submodule
+set(FAISS_ENABLE_PYTHON OFF CACHE BOOL "Disable Python support in FAISS" FORCE)
+set(FAISS_ENABLE_GPU OFF CACHE BOOL "Disable GPU support in FAISS" FORCE)
 set(FAISS_ENABLE_OPENMP ON CACHE BOOL "Enable OpenMP support in FAISS" FORCE)
+set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests" FORCE)
+set(FAISS_CMAKE_C_COMPILER "${CMAKE_C_COMPILER}" CACHE FILEPATH "" FORCE)
+set(FAISS_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE FILEPATH "" FORCE)
 
-# Submodules for FAISS and Google Test
+# Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
+
+# Google Test Integration
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(external/googletest/googletest/include)
+
+# Main Library Target
 add_library(vecodex-index
     src/VecodexIndex.cpp
     src/VecodexSegment.cpp
@@ -87,8 +124,43 @@ add_library(vecodex-index
 )
 
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads "${BLAS_LIBRARIES}")
 
-# Test executable
+# Link Libraries
+# Replace OpenBLAS::OpenBLAS with ${OpenBLAS_LIBRARIES}
+target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
+
+# Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
-target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads "${BLAS_LIBRARIES}")
+
+# Replace OpenBLAS::OpenBLAS with ${OpenBLAS_LIBRARIES}
+target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
+
+# Additional macOS-specific settings
+if(APPLE)
+    # Example: Link frameworks if needed
+    target_link_libraries(vecodex-index PRIVATE "-framework Accelerate")
+    target_link_libraries(VecodexIndexTest PRIVATE "-framework Accelerate")
+    
+    # Set macOS specific compile options
+    target_compile_options(vecodex-index PRIVATE -Wall -Wextra)
+    target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra)
+    
+    # Set rpath for dynamic libraries if necessary
+    set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "@loader_path/lib")
+    set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "@loader_path/lib")
+endif()
+
+# Additional Linux-specific settings
+if(UNIX AND NOT APPLE)
+    # Example: Link pthread explicitly if needed
+    target_link_libraries(vecodex-index PRIVATE pthread)
+    target_link_libraries(VecodexIndexTest PRIVATE pthread)
+    
+    # Set Linux specific compile options
+    target_compile_options(vecodex-index PRIVATE -Wall -Wextra -fPIC)
+    target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
+    
+    # Set rpath for dynamic libraries if necessary
+    set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+    set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+endif()
