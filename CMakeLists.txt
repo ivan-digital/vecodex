@@ -20,15 +20,11 @@ if(APPLE)
     # Get Homebrew prefixes
     execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND brew --prefix openblas OUTPUT_VARIABLE OPENBLAS_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND brew --prefix faiss OUTPUT_VARIABLE FAISS_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND brew --prefix googletest OUTPUT_VARIABLE GTEST_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     # Set CMAKE_PREFIX_PATH to prioritize Homebrew
     set(CMAKE_PREFIX_PATH
         "${LIBOMP_PREFIX}"
         "${OPENBLAS_PREFIX}"
-        "${FAISS_PREFIX}"
-        "${GTEST_PREFIX}"
         "${CMAKE_PREFIX_PATH}"
         CACHE STRING "CMake Prefix Path" FORCE)
 
@@ -36,16 +32,12 @@ if(APPLE)
     include_directories(
         "${LIBOMP_PREFIX}/include"
         "${OPENBLAS_PREFIX}/include"
-        "${FAISS_PREFIX}/include"
-        "${GTEST_PREFIX}/include"
         "${PROJECT_SOURCE_DIR}/include"
     )
 
     link_directories(
         "${LIBOMP_PREFIX}/lib"
         "${OPENBLAS_PREFIX}/lib"
-        "${FAISS_PREFIX}/lib"
-        "${GTEST_PREFIX}/lib"
     )
 
 elseif(UNIX)
