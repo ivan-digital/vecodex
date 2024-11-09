@@ -1,4 +1,4 @@
-# Vecodex - Vector Search CLuster
+# Vecodex - Vector Search Cluster
 
 ## Project structure
 
@@ -6,10 +6,10 @@
 Index [readme](index/README.md)
 
 ### Application
-Application
+Application [readme](app/README.md)
 
 ### Kubernetes operator
-Kubernetes operator
+Kubernetes operator [readme](kube-operator/README.md)
 
 
 ## Contribution Guidelines
