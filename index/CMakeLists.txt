@@ -10,10 +10,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Platform-specific configurations
 if(APPLE)
     message(STATUS "Configuring for macOS")
-
     # Use Apple Clang
-    set(CMAKE_C_COMPILER "/usr/bin/clang")
-    set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+    # set(CMAKE_C_COMPILER "/usr/bin/clang")
+    # set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
     message(STATUS "Using Apple Clang: ${CMAKE_C_COMPILER} and ${CMAKE_CXX_COMPILER}")
 
@@ -26,7 +25,7 @@ if(APPLE)
         "${LIBOMP_PREFIX}"
         "${OPENBLAS_PREFIX}"
         "${CMAKE_PREFIX_PATH}"
-        CACHE STRING "CMake Prefix Path" FORCE)
+        CACHE STRING "CMake Prefix Path")
 
     # Include directories and library paths
     include_directories(
@@ -79,12 +78,12 @@ find_package(Threads REQUIRED)
 # FAISS Configuration
 # Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables
 # Ensure FAISS is built from the submodule
-set(FAISS_ENABLE_PYTHON OFF CACHE BOOL "Disable Python support in FAISS" FORCE)
-set(FAISS_ENABLE_GPU OFF CACHE BOOL "Disable GPU support in FAISS" FORCE)
-set(FAISS_ENABLE_OPENMP ON CACHE BOOL "Enable OpenMP support in FAISS" FORCE)
-set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests" FORCE)
-set(FAISS_CMAKE_C_COMPILER "${CMAKE_C_COMPILER}" CACHE FILEPATH "" FORCE)
-set(FAISS_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE FILEPATH "" FORCE)
+set(FAISS_ENABLE_PYTHON OFF CACHE BOOL "Disable Python support in FAISS")
+set(FAISS_ENABLE_GPU OFF CACHE BOOL "Disable GPU support in FAISS")
+set(FAISS_ENABLE_OPENMP ON CACHE BOOL "Enable OpenMP support in FAISS")
+set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
+#set(FAISS_CMAKE_C_COMPILER "${CMAKE_C_COMPILER}" CACHE FILEPATH "")
+#set(FAISS_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE FILEPATH "")
 
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)

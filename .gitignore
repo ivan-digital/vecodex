@@ -3,6 +3,7 @@
 # ====================
 # Build directories
 /build/
+/index/build/
 /CMakeFiles/
 /CMakeCache.txt
 /CMakeScripts/
@@ -37,7 +38,7 @@ EagerLinkingTBDs/
 *.dylib
 *.dll
 *.exe
-vecodex-index
+vecodex
 VecodexIndexTest
 
 # ====================
@@ -50,8 +51,8 @@ lib*.dylib
 # ====================
 # External Libraries
 # ====================
-external/googletest/build/
-external/faiss/build/
+index/external/googletest/build/
+index/external/faiss/build/
 
 # ====================
 # Temporary Files

@@ -1,0 +1,5 @@
+if(EXISTS "/Users/ivan/vs/vecodex-index/index/external/faiss/tests/faiss_test[1]_tests.cmake")
+  include("/Users/ivan/vs/vecodex-index/index/external/faiss/tests/faiss_test[1]_tests.cmake")
+else()
+  add_test(faiss_test_NOT_BUILT faiss_test_NOT_BUILT)
+endif()

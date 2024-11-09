@@ -1,0 +1,6 @@
+[submodule "index/external/faiss"]
+	path = index/external/faiss
+	url = https://github.com/facebookresearch/faiss.git
+[submodule "index/external/googletest"]
+	path = index/external/googletest
+	url = https://github.com/google/googletest.git

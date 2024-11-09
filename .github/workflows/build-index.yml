@@ -1,10 +1,14 @@
-name: Build
+name: Build Index Library
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'index/**'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'index/**'
 
 jobs:
   build:
@@ -23,6 +27,7 @@ jobs:
 
     - name: Setup Submodules
       run: |
+        cd index
         git submodule update --init --recursive
 
     - name: Install Dependencies (macOS)
@@ -39,6 +44,7 @@ jobs:
 
     - name: Configure CMake
       run: |
+        cd index
         mkdir -p build
         cd build
         if [[ "$RUNNER_OS" == "macOS" ]]; then
@@ -49,10 +55,12 @@ jobs:
 
     - name: Build
       run: |
+        cd index
         cd build
         cmake --build . --config Debug
 
     - name: Run Tests
       run: |
+        cd index
         cd build
         ctest --output-on-failure
