@@ -1,25 +1,37 @@
 // src/VecodexIndex.cpp
 #include "VecodexIndex.h"
-
-VecodexIndex::VecodexIndex(int dimension, int segmentThreshold)
-    : dimension(dimension), segmentThreshold(segmentThreshold) {
-    segments.emplace_back(dimension);
+#include "VecodexSegmentFactory.h"
+#include <map>
+#include <iostream>
+VecodexIndex::VecodexIndex(int dimension, int segmentThreshold, IndexType type)
+    : dimension_(dimension), segmentThreshold_(segmentThreshold), factory_(type) {
+    segments_.push_back(factory_.createIndexSegment(dimension_));
 }
 
 void VecodexIndex::addVector(const std::string& id, const std::vector<float>& vector, const std::unordered_map<std::string, std::string>& attributes) {
-    if (segments.back().size() >= segmentThreshold) {
-        segments.emplace_back(dimension);
+    if (segments_.back().size() >= segmentThreshold_) {
+        segments_.push_back(factory_.createIndexSegment(dimension_));
     }
-    segments.back().addVector(id, vector, attributes);
+    segments_.back().addVector(id, vector, attributes);
 }
 
 std::vector<std::string> VecodexIndex::search(const std::vector<float>& query, int k) {
-    std::vector<std::string> results;
-    for (const auto& segment : segments) {
+    std::multimap<float, std::string> kth_stat;
+    for (const auto& segment : segments_) {
         auto segmentResults = segment.search(query, k);
-        results.insert(results.end(), segmentResults.begin(), segmentResults.end());
+        for (const auto& vec : segmentResults) {
+            kth_stat.insert({vec.second, vec.first});
+            if (kth_stat.size() > k) {
+                kth_stat.erase(kth_stat.rbegin()->first);
+            }
+        }
+        // results.insert(results.end(), segmentResults.begin(), segmentResults.end());
     }
     // Further logic to select top-k from combined results
+    std::vector<std::string> results;
+    for (const auto& vec : kth_stat) {
+        results.push_back(vec.second);
+    }
     return results;
 }
 
@@ -30,13 +42,12 @@ void VecodexIndex::updateVector(const std::string& id, const std::vector<float>&
 
 void VecodexIndex::mergeSegments() {
     // Merge segments based on your policy (e.g., combining small segments, periodic merges)
-    if (segments.size() > 1) {
-        VecodexSegment mergedSegment(dimension);
-        for (const auto& segment : segments) {
+    if (segments_.size() > 1) {
+        VecodexSegment mergedSegment(factory_.createIndexSegment(dimension_));
+        for (const auto& segment : segments_) {
             mergedSegment.mergeSegment(segment);
         }
-        segments.clear();
-        segments.push_back(std::move(mergedSegment));
+        segments_.clear();
+        segments_.push_back(std::move(mergedSegment));
     }
 }
-

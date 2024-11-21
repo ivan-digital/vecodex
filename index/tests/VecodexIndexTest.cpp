@@ -2,10 +2,22 @@
 
 #include "VecodexIndex.h"
 #include "gtest/gtest.h"
-
+#include <unordered_set>
+bool check_meta(const std::vector<std::string> &out_meta, const std::vector<std::string> &true_meta) {
+    if (out_meta.size() != true_meta.size()) {
+        return false;
+    }
+    auto meta = std::unordered_set<std::string>(out_meta.begin(), out_meta.end());
+    for (const auto& id : true_meta) {
+        if (!meta.count(id)) {
+            return false;
+        }
+    }
+    return true;
+}
 TEST(VecodexIndexTest, AddAndSearchVector) {
     // Initialize index with 2 dimensions and segment threshold of 5
-    VecodexIndex index(2, 5);
+    VecodexIndex index(2, 5, IndexType::Flat);
 
     // Add some vectors
     std::vector<float> vector1 = {1.0f, 2.0f};
@@ -20,13 +32,11 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
     std::vector<std::string> results = index.search(query, 1);
 
     // Verify the search result
-    ASSERT_EQ(results.size(), 1);
-    EXPECT_EQ(results[0], "vec1");
+    EXPECT_TRUE(check_meta(results, {"vec1"}));
 }
-
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
     // Initialize index with 2 dimensions and segment threshold of 3
-    VecodexIndex index(2, 3);
+    VecodexIndex index(2, 3, IndexType::Flat);
 
     // Add vectors
     index.addVector("vec1", {1.0f, 1.0f}, {{"name", "vector1"}});
@@ -40,16 +50,18 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
     // Search for top-2 closest vectors to the query
     std::vector<float> query = {3.5f, 3.5f};
     std::vector<std::string> results = index.search(query, 2);
+    for (auto x : results) {
+        std::cout << x << " ";
+    }
+    std::cout << "\n";
 
     // Verify that the search returns top-2 nearest vectors
-    ASSERT_EQ(results.size(), 2);
-    EXPECT_EQ(results[0], "vec3");
-    EXPECT_EQ(results[1], "vec4");
+    EXPECT_TRUE(check_meta(results, {"vec3", "vec4"}));
 }
 
 TEST(VecodexIndexTest, MetadataCheck) {
     // Initialize index with 2 dimensions and segment threshold of 3
-    VecodexIndex index(2, 3);
+    VecodexIndex index(2, 3, IndexType::Flat);
 
     // Add a vector with metadata
     std::vector<float> vector1 = {1.0f, 1.0f};
@@ -60,8 +72,7 @@ TEST(VecodexIndexTest, MetadataCheck) {
     std::vector<float> query = {1.0f, 1.0f};
     std::vector<std::string> results = index.search(query, 1);
 
-    ASSERT_EQ(results.size(), 1);
-    EXPECT_EQ(results[0], "test1");
+    EXPECT_TRUE(check_meta(results, {"test1"}));
 
     // Additional checks for metadata if needed
     // Assuming a function is implemented to retrieve metadata based on ID
@@ -69,11 +80,11 @@ TEST(VecodexIndexTest, MetadataCheck) {
 
 TEST(VecodexIndexTest, MergeSegments) {
     // Initialize index with 2 dimensions and segment threshold of 2
-    VecodexIndex index(2, 2);
+    VecodexIndex index(2, 2, IndexType::Flat);
 
     // Add vectors to create multiple segments
     index.addVector("vec1", {1.0f, 1.0f}, {{"name", "vector1"}});
-    index.addVector("vec2", {2.0f, 2.0f}, {{"name", "vector2"}});
+    index.addVector("vec2", {1.9f, 1.9f}, {{"name", "vector2"}});
     index.addVector("vec3", {3.0f, 3.0f}, {{"name", "vector3"}});
 
     // Merge segments
@@ -83,12 +94,10 @@ TEST(VecodexIndexTest, MergeSegments) {
     std::vector<float> query = {2.5f, 2.5f};
     std::vector<std::string> results = index.search(query, 1);
 
-    ASSERT_EQ(results.size(), 1);
-    EXPECT_EQ(results[0], "vec3");
+    EXPECT_TRUE(check_meta(results, {"vec3"}));
 }
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-

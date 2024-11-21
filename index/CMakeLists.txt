@@ -6,7 +6,7 @@ project(vecodex-index)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 # Platform-specific configurations
 if(APPLE)
     message(STATUS "Configuring for macOS")
@@ -98,9 +98,11 @@ add_library(vecodex-index
     src/VecodexIndex.cpp
     src/VecodexSegment.cpp
     src/DocumentMetadata.cpp
+    src/VecodexSegmentFactory.cpp
     include/VecodexIndex.h
     include/VecodexSegment.h
     include/DocumentMetadata.h
+    include/VecodexSegmentFactory.h
 )
 
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
@@ -119,11 +121,11 @@ if(APPLE)
     # Example: Link frameworks if needed
     target_link_libraries(vecodex-index PRIVATE "-framework Accelerate")
     target_link_libraries(VecodexIndexTest PRIVATE "-framework Accelerate")
-    
+
     # Set macOS specific compile options
     target_compile_options(vecodex-index PRIVATE -Wall -Wextra)
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra)
-    
+
     # Set rpath for dynamic libraries if necessary
     set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "@loader_path/lib")
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "@loader_path/lib")
@@ -134,11 +136,11 @@ if(UNIX AND NOT APPLE)
     # Example: Link pthread explicitly if needed
     target_link_libraries(vecodex-index PRIVATE pthread)
     target_link_libraries(VecodexIndexTest PRIVATE pthread)
-    
+
     # Set Linux specific compile options
     target_compile_options(vecodex-index PRIVATE -Wall -Wextra -fPIC)
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
-    
+
     # Set rpath for dynamic libraries if necessary
     set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
