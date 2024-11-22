@@ -4,24 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-
-namespace {
-    enum VecodexAppMode {
-        Searcher,
-        Writer,
-        Coordinator
-    };
-    const std::unordered_map<std::string, VecodexAppMode> str2mode = {
-        {"searcher", VecodexAppMode::Searcher},
-        {"writer", VecodexAppMode::Writer},
-        {"coordinator", VecodexAppMode::Coordinator}
-    };
-    const std::unordered_map<VecodexAppMode, std::string> mode2str = {
-        {VecodexAppMode::Searcher, "searcher"},
-        {VecodexAppMode::Writer, "writer"},
-        {VecodexAppMode::Coordinator, "coordinator"}
-    };
-}
+#include "coordinator.h"
 
 
 int main(int argc, char* argv[]) {
@@ -29,29 +12,20 @@ int main(int argc, char* argv[]) {
     argparse::ArgumentParser program("vecodex-app");
     program.add_argument("mode")
         .help("...")
-        .choices(
-            mode2str.find(VecodexAppMode::Searcher)->second, 
-            mode2str.find(VecodexAppMode::Writer)->second, 
-            mode2str.find(VecodexAppMode::Coordinator)->second
-        )
-        .action([](const std::string& value) {
-            return str2mode.find(value)->second;
-        });
+        .choices("searcher", "writer", "coordinator");
     program.add_argument("-d", "--daemon")
         .help("...")
         .flag()
         .default_value(false);
     program.add_argument("--listening-port")
         .help("...")
-        .scan<'u', unsigned int>();
+        .default_value("44400");
     program.add_argument("--output-port")
         .help("...")
-        .scan<'u', unsigned int>();
+        .default_value("44401");
     program.add_argument("--zookeeper-host")
         .help("...");
     program.add_argument("--s3-host")
-        .help("...");
-    program.add_argument("--zookeeper-host")
         .help("...");
 
     try {
@@ -62,21 +36,22 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
-    const VecodexAppMode program_mode = program.get<VecodexAppMode>("mode");
-    switch (program_mode)
-    {
-    case VecodexAppMode::Searcher:
+    const std::string program_mode = program.get("mode");
+    const std::string output_port = program.get("--output-port");
+    const std::string listening_port = program.get("--listening-port");
+
+    if (program_mode == "searcher") {
         // TODO
-        break;
-    case VecodexAppMode::Writer:
+    }
+    if (program_mode == "writer") {
         // TODO
-        break;
-    case VecodexAppMode::Coordinator:
-        // TODO 
-        break;
-    default:
-        break;
+    }
+    if (program_mode == "coordinator") {
+        Coordinator server = Coordinator("localhost", output_port);
+        server.Run();
+        // TODO
     }
 
+    throw std::invalid_argument("Invalid mode: " + program_mode);
     return 0;
 }

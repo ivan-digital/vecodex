@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package service;
+
+message Document {
+    repeated float vector_data = 1;
+    int32 id = 2;
+    // what else should be here ?
+}
+
+message SearchRequest {
+    optional Document data = 1;
+    // what else should be here ?
+}
+
+message SearchResponse {
+    repeated Document result = 1;
+    repeated float scores = 2;
+    // what else should be here ?
+}
+
+service BaseService {
+    rpc ProcessSearchRequest (SearchRequest) returns (SearchResponse) {}
+}
