@@ -76,7 +76,8 @@ The **Vecodex Kube-Operator** implements the following core functionalities:
 If you change something you need to run:
 ```bash 
 make generate
-make manifests```
+make manifests
+```
 [Kubernetes Operator SDK architecture](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/)
 
 ## Building the Operator
