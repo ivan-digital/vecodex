@@ -6,12 +6,10 @@
 int main(int argc, char* argv[]) {
 
     std::string port;
-    try {
-        port = argv[1];
-    } 
-    catch (const std::exception& err) {
-        std::cerr << "Cannot parse first argument\nUsage: ./example_client <server-side port>";
-        std::exit();
+    if (argc > 1 && argv[1] != nullptr) {
+        port = std::string(argv[1]);
+    } else {
+        throw std::runtime_error("Port not found.\nUsage: ./example_client <server-side port>\n");
     }
 
     CoordinatorClient client = CoordinatorClient(
@@ -25,7 +23,5 @@ int main(int argc, char* argv[]) {
     *req.mutable_data() = doc;
 
     auto resp = client.getProcessedDocuments(req);
-    std::cout << "Server response id: " + resp.result(0).id() << std::endl;
-
-    return 0;
+    std::cout << resp.result(0).id() << std::endl;
 }
