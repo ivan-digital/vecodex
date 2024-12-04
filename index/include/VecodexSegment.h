@@ -1,5 +1,4 @@
-#ifndef VECODEX_SEGMENT_H
-#define VECODEX_SEGMENT_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -35,6 +34,3 @@ private:
     std::unique_ptr<faiss::Index> index_;
     std::vector<DocumentMetadata> metadata_;
 };
-
-
-#endif // VECODEX_SEGMENT_H

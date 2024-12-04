@@ -1,16 +1,15 @@
-// src/VecodexIndex.cpp
 #include "VecodexIndex.h"
 #include "VecodexSegmentFactory.h"
 #include <map>
 #include <iostream>
-VecodexIndex::VecodexIndex(int dimension, int segmentThreshold, IndexType type)
-    : dimension_(dimension), segmentThreshold_(segmentThreshold), factory_(type) {
-    segments_.push_back(factory_.createIndexSegment(dimension_));
+VecodexIndex::VecodexIndex(int segmentThreshold, const IndexConfig& config)
+    : segmentThreshold_(segmentThreshold), factory_(config) {
+    segments_.push_back(factory_.createIndexSegment());
 }
 
 void VecodexIndex::addVector(const std::string& id, const std::vector<float>& vector, const std::unordered_map<std::string, std::string>& attributes) {
     if (segments_.back().size() >= segmentThreshold_) {
-        segments_.push_back(factory_.createIndexSegment(dimension_));
+        segments_.push_back(factory_.createIndexSegment());
     }
     segments_.back().addVector(id, vector, attributes);
 }
@@ -43,7 +42,7 @@ void VecodexIndex::updateVector(const std::string& id, const std::vector<float>&
 void VecodexIndex::mergeSegments() {
     // Merge segments based on your policy (e.g., combining small segments, periodic merges)
     if (segments_.size() > 1) {
-        VecodexSegment mergedSegment(factory_.createIndexSegment(dimension_));
+        VecodexSegment mergedSegment(factory_.createIndexSegment());
         for (const auto& segment : segments_) {
             mergedSegment.mergeSegment(segment);
         }

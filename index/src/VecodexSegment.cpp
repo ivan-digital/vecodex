@@ -1,4 +1,3 @@
-// src/VecodexSegment.cpp
 #include "VecodexSegment.h"
 VecodexSegment::VecodexSegment(std::unique_ptr<faiss::Index> index) : index_(std::move(index)) {}
 

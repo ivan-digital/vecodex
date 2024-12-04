@@ -87,7 +87,7 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
-
+add_subdirectory(external/json)
 # Google Test Integration
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
@@ -99,10 +99,12 @@ add_library(vecodex-index
     src/VecodexSegment.cpp
     src/DocumentMetadata.cpp
     src/VecodexSegmentFactory.cpp
+    src/IndexConfig.cpp
     include/VecodexIndex.h
     include/VecodexSegment.h
     include/DocumentMetadata.h
     include/VecodexSegmentFactory.h
+    include/IndexConfig.h
 )
 
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
@@ -111,10 +113,10 @@ target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 
 # Link Libraries to Main Library Target
-target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
+target_link_libraries(vecodex-index PRIVATE jsoncpp_lib faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)

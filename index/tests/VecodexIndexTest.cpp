@@ -3,6 +3,11 @@
 #include "VecodexIndex.h"
 #include "gtest/gtest.h"
 #include <unordered_set>
+#include "json/json.h"
+#include <fstream>
+
+const std::string basic_flat = "basic_flat.json";
+
 bool check_meta(const std::vector<std::string> &out_meta, const std::vector<std::string> &true_meta) {
     if (out_meta.size() != true_meta.size()) {
         return false;
@@ -15,9 +20,18 @@ bool check_meta(const std::vector<std::string> &out_meta, const std::vector<std:
     }
     return true;
 }
+void createBasicFlat(int dim) {
+    Json::Value config;
+    config["dim"] = dim;
+    config["metric"] = "L2";
+    config["M"] = 32;
+    config["index"] = "Flat";
+    std::ofstream out(basic_flat);
+    out << config;
+}
 TEST(VecodexIndexTest, AddAndSearchVector) {
     // Initialize index with 2 dimensions and segment threshold of 5
-    VecodexIndex index(2, 5, IndexType::Flat);
+    VecodexIndex index(5, IndexConfig(basic_flat));
 
     // Add some vectors
     std::vector<float> vector1 = {1.0f, 2.0f};
@@ -36,7 +50,7 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
 }
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
     // Initialize index with 2 dimensions and segment threshold of 3
-    VecodexIndex index(2, 3, IndexType::Flat);
+    VecodexIndex index(3, IndexConfig(basic_flat));
 
     // Add vectors
     index.addVector("vec1", {1.0f, 1.0f}, {{"name", "vector1"}});
@@ -50,10 +64,6 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
     // Search for top-2 closest vectors to the query
     std::vector<float> query = {3.5f, 3.5f};
     std::vector<std::string> results = index.search(query, 2);
-    for (auto x : results) {
-        std::cout << x << " ";
-    }
-    std::cout << "\n";
 
     // Verify that the search returns top-2 nearest vectors
     EXPECT_TRUE(check_meta(results, {"vec3", "vec4"}));
@@ -61,7 +71,7 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 
 TEST(VecodexIndexTest, MetadataCheck) {
     // Initialize index with 2 dimensions and segment threshold of 3
-    VecodexIndex index(2, 3, IndexType::Flat);
+    VecodexIndex index(3, IndexConfig(basic_flat));
 
     // Add a vector with metadata
     std::vector<float> vector1 = {1.0f, 1.0f};
@@ -80,7 +90,7 @@ TEST(VecodexIndexTest, MetadataCheck) {
 
 TEST(VecodexIndexTest, MergeSegments) {
     // Initialize index with 2 dimensions and segment threshold of 2
-    VecodexIndex index(2, 2, IndexType::Flat);
+    VecodexIndex index(2, IndexConfig(basic_flat));
 
     // Add vectors to create multiple segments
     index.addVector("vec1", {1.0f, 1.0f}, {{"name", "vector1"}});
@@ -98,6 +108,7 @@ TEST(VecodexIndexTest, MergeSegments) {
 }
 
 int main(int argc, char **argv) {
+    createBasicFlat(2);
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

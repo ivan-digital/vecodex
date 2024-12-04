@@ -4,15 +4,19 @@
 #include "faiss/IndexHNSW.h"
 #include <memory>
 
-VecodexSegment VecodexSegmentFactory::createIndexSegment(int dim, faiss::MetricType metric) {
-    switch (type_) {
+VecodexSegmentFactory::VecodexSegmentFactory(IndexConfig config) : config_(config) {
+}
+
+VecodexSegment VecodexSegmentFactory::createIndexSegment() const {
+
+    switch (config_.type) {
         case (IndexType::Flat):
         {
-            return createFlat(dim, metric);
+            return createFlat(config_.dim, config_.metric);
         }
         case (IndexType::HNSW):
         {
-            return createHNSW(dim, 32, metric);
+            return createHNSW(config_.dim, config_.M, config_.metric);
         }
         default: {
             throw std::runtime_error("Couldn't recognize vector index type");
