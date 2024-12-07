@@ -87,7 +87,7 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
-add_subdirectory(external/json)
+add_subdirectory(external/jsoncpp)
 # Google Test Integration
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
