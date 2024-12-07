@@ -1,3 +1,0 @@
-[submodule "index/external/json"]
-	path = index/external/json
-	url = https://github.com/open-source-parsers/jsoncpp.git
