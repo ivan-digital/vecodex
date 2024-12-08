@@ -63,4 +63,4 @@ jobs:
       run: |
         cd index
         cd build
-        ctest --output-on-failure
+        ctest -R "test_index*" --output-on-failure

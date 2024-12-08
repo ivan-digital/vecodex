@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+enable_testing()
 # Platform-specific configurations
 if(APPLE)
     message(STATUS "Configuring for macOS")
@@ -111,6 +112,8 @@ target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
+add_test(NAME test_index_basic COMMAND VecodexIndexTest)
+
 
 # Link Libraries to Main Library Target
 target_link_libraries(vecodex-index PRIVATE jsoncpp_lib faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
