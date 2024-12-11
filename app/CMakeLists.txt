@@ -37,6 +37,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
+# AWS SDK
+FetchContent_Declare(
+    aws-cpp-sdk
+    GIT_REPOSITORY https://github.com/aws/aws-sdk-cpp.git
+    GIT_TAG        1.11.11
+    CMAKE_ARGS     -DBUILD_ONLY=s3
+    TEST_COMMAND   ""
+)
+FetchContent_MakeAvailable(aws-cpp-sdk)
 
 # gRPC
 add_subdirectory(external/grpc)
@@ -75,7 +84,7 @@ file(GLOB SRC_LIST src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-target_link_libraries(${PROJECT_NAME} argparse protobuf::libprotobuf gRPC::grpc++ proto-objects)
+target_link_libraries(${PROJECT_NAME} argparse protobuf::libprotobuf gRPC::grpc++ proto-objects aws-cpp-sdk-core aws-cpp-sdk-s3)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/generated)
 
 
