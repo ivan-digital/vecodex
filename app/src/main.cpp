@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "coordinator.h"
+#include "Writer.h"
 
 
 int main(int argc, char* argv[]) {
@@ -44,6 +45,9 @@ int main(int argc, char* argv[]) {
         // TODO
     }
     if (program_mode == "writer") {
+        const std::string s3_host = program.get("--s3-host");
+        Writer server = AppWriter("localhost", output_port, s3_host);
+        server.Run();
         // TODO
     }
     if (program_mode == "coordinator") {
