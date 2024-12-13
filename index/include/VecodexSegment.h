@@ -24,7 +24,7 @@ public:
     // Mark search as const
     std::unordered_map<std::string, float> search(const std::vector<float>& query, int k) const;
 
-    void mergeSegment(const VecodexSegment& other);
+    void mergeSegment(VecodexSegment& other);
 
     size_t size() const {
         return ids_.size();

@@ -36,7 +36,7 @@ std::unordered_map<IDType, float> VecodexSegment::search(const std::vector<float
     return result;
 }
 
-void VecodexSegment::mergeSegment(const VecodexSegment& other) {
+void VecodexSegment::mergeSegment(VecodexSegment& other) {
     index_->merge_from(*other.index_);
-    std::ranges::copy_n(other.ids_.begin(), other.ids_.size(), std::back_inserter(ids_));
+    std::copy_n(other.ids_.begin(), other.ids_.size(), std::back_inserter(ids_));
 }

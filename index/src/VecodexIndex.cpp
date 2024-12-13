@@ -45,7 +45,7 @@ void VecodexIndex::mergeSegments() {
         return;
     }
     VecodexSegment mergedSegment(factory_.createIndexSegment());
-    for (const auto& segment : segments_) {
+    for (auto& segment : segments_) {
         mergedSegment.mergeSegment(segment);
     }
     segments_.clear();
