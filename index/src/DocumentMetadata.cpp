@@ -1,4 +1,3 @@
-// src/DouumentMethadata.h
 #include "DocumentMetadata.h"
 
 DocumentMetadata::DocumentMetadata(const std::string& id, const std::unordered_map<std::string, std::string>& attributes)

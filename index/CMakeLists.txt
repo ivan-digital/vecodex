@@ -6,7 +6,8 @@ project(vecodex-index)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+enable_testing()
 # Platform-specific configurations
 if(APPLE)
     message(STATUS "Configuring for macOS")
@@ -87,7 +88,7 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
-
+add_subdirectory(external/jsoncpp)
 # Google Test Integration
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
@@ -98,32 +99,38 @@ add_library(vecodex-index
     src/VecodexIndex.cpp
     src/VecodexSegment.cpp
     src/DocumentMetadata.cpp
+    src/VecodexSegmentFactory.cpp
+    src/IndexConfig.cpp
     include/VecodexIndex.h
     include/VecodexSegment.h
     include/DocumentMetadata.h
+    include/VecodexSegmentFactory.h
+    include/IndexConfig.h
 )
 
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
+add_test(NAME test_index_basic COMMAND VecodexIndexTest)
+
 
 # Link Libraries to Main Library Target
-target_link_libraries(vecodex-index PRIVATE faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
+target_link_libraries(vecodex-index PRIVATE jsoncpp_lib faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
     # Example: Link frameworks if needed
     target_link_libraries(vecodex-index PRIVATE "-framework Accelerate")
     target_link_libraries(VecodexIndexTest PRIVATE "-framework Accelerate")
-    
+
     # Set macOS specific compile options
     target_compile_options(vecodex-index PRIVATE -Wall -Wextra)
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra)
-    
+
     # Set rpath for dynamic libraries if necessary
     set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "@loader_path/lib")
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "@loader_path/lib")
@@ -134,11 +141,11 @@ if(UNIX AND NOT APPLE)
     # Example: Link pthread explicitly if needed
     target_link_libraries(vecodex-index PRIVATE pthread)
     target_link_libraries(VecodexIndexTest PRIVATE pthread)
-    
+
     # Set Linux specific compile options
     target_compile_options(vecodex-index PRIVATE -Wall -Wextra -fPIC)
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
-    
+
     # Set rpath for dynamic libraries if necessary
     set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")

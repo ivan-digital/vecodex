@@ -1,25 +1,21 @@
-// include/VecodexIndex.h
-#ifndef VECODEX_INDEX_H
-#define VECODEX_INDEX_H
+#pragma once
 
 #include "VecodexSegment.h"
+#include "VecodexSegmentFactory.h"
 #include <vector>
 
 class VecodexIndex {
 public:
-    VecodexIndex(int dimension, int segmentThreshold);
+    VecodexIndex(int segmentThreshold, const IndexConfig& config);
 
-    void addVector(const std::string& id, const std::vector<float>& vector, const std::unordered_map<std::string, std::string>& attributes);
+    void addVector(const std::string& id, const std::vector<float>& vector);
     std::vector<std::string> search(const std::vector<float>& query, int k);
 
-    void updateVector(const std::string& id, const std::vector<float>& vector, const std::unordered_map<std::string, std::string>& attributes);
+    void updateVector(const std::string& id, const std::vector<float>& vector);
     void mergeSegments();
 
 private:
-    int dimension;
-    int segmentThreshold;
-    std::vector<VecodexSegment> segments;
+    size_t segmentThreshold_;
+    VecodexSegmentFactory factory_;
+    std::vector<VecodexSegment> segments_;
 };
-
-#endif // VECODEX_INDEX_H
-

@@ -1,5 +1,4 @@
-#ifndef DOCUMENT_METADATA_H
-#define DOCUMENT_METADATA_H
+#pragma once
 
 #include <string>
 #include <unordered_map>
@@ -15,5 +14,3 @@ private:
     std::string id;
     std::unordered_map<std::string, std::string> attributes;
 };
-
-#endif // DOCUMENT_METADATA_H
