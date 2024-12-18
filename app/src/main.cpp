@@ -67,8 +67,13 @@ int main(int argc, char* argv[]) {
     {
     case VecodexAppMode::Searcher:
         // TODO
-        break;
-    case VecodexAppMode::Writer:
+    }
+    if (program_mode == "writer") {
+        // TODO
+    }
+    if (program_mode == "coordinator") {
+        Coordinator server = Coordinator("localhost", listening_port);
+        server.Run();
         // TODO
         break;
     case VecodexAppMode::Coordinator:
