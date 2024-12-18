@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
         // TODO
     }
     if (program_mode == "coordinator") {
-        Coordinator server = Coordinator("localhost", output_port);
+        Coordinator server = Coordinator("localhost", listening_port);
         server.Run();
         // TODO
     }

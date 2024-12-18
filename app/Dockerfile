@@ -1,0 +1,21 @@
+FROM gcc:latest
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y cmake
+    # apt-get install -y protobuf-compiler && \
+    # apt-get install -y libprotobuf-dev
+
+COPY build.sh CMakeLists.txt /app
+COPY ./examples/ /app/examples/
+COPY ./proto/ /app/proto
+COPY ./external/ /app/external
+COPY ./include/ /app/include
+COPY ./src/ /app/src
+
+RUN ls -la
+
+RUN ./build.sh
+
+RUN ./build/vecodex-app coordinator --listening-port 44400
