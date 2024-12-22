@@ -1,3 +1,12 @@
 [submodule "app/external/grpc"]
 	path = app/external/grpc
 	url = https://github.com/grpc/grpc
+[submodule "index/external/faiss"]
+	path = index/external/faiss
+	url = https://github.com/facebookresearch/faiss.git
+[submodule "index/external/googletest"]
+	path = index/external/googletest
+	url = https://github.com/google/googletest.git
+[submodule "index/external/jsoncpp"]
+	path = index/external/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git
