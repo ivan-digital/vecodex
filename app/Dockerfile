@@ -4,8 +4,6 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y cmake
-    # apt-get install -y protobuf-compiler && \
-    # apt-get install -y libprotobuf-dev
 
 COPY build.sh CMakeLists.txt /app
 COPY ./examples/ /app/examples/
@@ -18,4 +16,4 @@ RUN ls -la
 
 RUN ./build.sh
 
-RUN ./build/vecodex-app coordinator --listening-port 44400
+CMD ./build/vecodex-app coordinator
