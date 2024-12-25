@@ -1,3 +1,5 @@
+#pragma once
+
 #include <service.grpc.pb.h>
 #include <string>
 
