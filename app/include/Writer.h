@@ -1,7 +1,7 @@
-#ifndef VECODEX_WRITER_H
-#define VECODEX_WRITER_H
+#pragma once
 
 #include "base.h"
+#include "VecodexIndex.h"
 
 #include <vector>
 #include <string>
@@ -15,23 +15,10 @@
 using namespace Aws;
 using namespace Aws::Auth;
 
-namespace {
-    struct Event {
-        Event() = default;
-
-        Event(const std::string& id, const std::vector<float>& vector,
-              const std::unordered_map <std::string, std::string>& attributes)
-              : id(id), vector(vector), attributes(attributes) {};
-
-        std::string id;
-        std::vector<float> vector;
-        std::unordered_map <std::string, std::string> attributes;
-    };
-}
 
 class Writer : public BaseServer {
 public:
-    Writer(const std::string& host, const std::string& port, const std::string& s3_host);
+    Writer(const std::string& host, const std::string& port, const std::string& s3_host, size_t threshold, const std::string& config_filename);
 
     ~Writer();
 
@@ -40,13 +27,12 @@ public:
 private:
     void receiveUpdate(const std::string& id, const std::vector<float>& vector, const std::unordered_map <std::string, std::string>& attributes);
 
-    void pushUpdates();
+    void pushUpdate(const VecodexSegment& segment);
 
     bool putObjectBuffer(const Aws::String &bucketName, const Aws::String &objectName, const std::string &objectContent, const Aws::S3::S3ClientConfiguration &clientConfig, const Aws::Auth::AWSCredentials &credentials);
 
-    std::vector<Event> updates;
     std::string s3_host;
     Aws::SDKOptions options;
+    VecodexIndex index;
 };
 
-#endif //VECODEX_WRITER_H

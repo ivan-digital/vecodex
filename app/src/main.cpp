@@ -1,6 +1,5 @@
-
 #include <argparse/argparse.hpp>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <unordered_map>
 
@@ -28,6 +27,10 @@ int main(int argc, char* argv[]) {
         .help("...");
     program.add_argument("--s3-host")
         .help("...");
+    program.add_argument("--threshold")
+        .help("...");
+    program.add_argument("--config")
+        .help("...");
 
     try {
         program.parse_args(argc, argv);
@@ -46,7 +49,9 @@ int main(int argc, char* argv[]) {
     }
     if (program_mode == "writer") {
         const std::string s3_host = program.get("--s3-host");
-        Writer server = AppWriter("localhost", output_port, s3_host);
+        auto threshold = program.get<size_t>("--threshold");
+        const std::string config_filename = program.get("--config");
+        Writer server = Writer("localhost", listening_port, s3_host, threshold, config_filename);
         server.Run();
         // TODO
     }
