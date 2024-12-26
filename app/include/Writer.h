@@ -2,6 +2,7 @@
 
 #include "base.h"
 #include "VecodexIndex.h"
+#include "StorageClient.h"
 
 #include <vector>
 #include <string>
@@ -29,10 +30,8 @@ private:
 
     void pushUpdate(const VecodexSegment& segment);
 
-    bool putObjectBuffer(const Aws::String &bucketName, const Aws::String &objectName, const std::string &objectContent, const Aws::S3::S3ClientConfiguration &clientConfig, const Aws::Auth::AWSCredentials &credentials);
-
     std::string s3_host;
-    Aws::SDKOptions options;
-    VecodexIndex index;
+    std::optional<VecodexIndex> index;
+    std::optional<StorageClient> storage_client;
 };
 
