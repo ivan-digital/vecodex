@@ -20,7 +20,8 @@ public:
     VecodexSegment(VecodexSegment&&);
 
     void addVector(const IDType& id, const std::vector<float>& vector);
-    
+
+    void addVectorBatch(size_t n, const IDType* ids, const float* vectors);  
     // Mark search as const
     std::unordered_map<std::string, float> search(const std::vector<float>& query, int k) const;
 

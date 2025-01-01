@@ -23,6 +23,11 @@ void VecodexSegment::addVector(const IDType& id, const std::vector<float>& vecto
     ids_.push_back(id);
 }
 
+void VecodexSegment::addVectorBatch(size_t n, const IDType* ids, const float* vectors) {
+    std::copy_n(ids, n, std::back_inserter(ids_));
+    index_->add(n, vectors);
+}
+
 std::unordered_map<IDType, float> VecodexSegment::search(const std::vector<float>& query, int k) const {
     std::vector<faiss::idx_t> indices(k);
     std::vector<float> distances(k);
@@ -31,6 +36,9 @@ std::unordered_map<IDType, float> VecodexSegment::search(const std::vector<float
     std::unordered_map<IDType, float> result;
     result.reserve(k);
     for (size_t i = 0; i < indices.size(); ++i) {
+        if (indices[i] == -1) {
+            continue;
+        }
         result[ids_[indices[i]]] = distances[i];
     }
     return result;

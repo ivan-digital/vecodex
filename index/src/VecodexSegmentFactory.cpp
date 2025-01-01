@@ -27,7 +27,12 @@ VecodexSegment VecodexSegmentFactory::createFlat(int dim, faiss::MetricType metr
     auto index_ptr = std::make_unique<faiss::IndexFlat>(dim, metric);
     return VecodexSegment(std::move(index_ptr));
 }
+
 VecodexSegment VecodexSegmentFactory::createHNSW(int dim, int M, faiss::MetricType metric) {
     auto index_ptr = std::make_unique<faiss::IndexHNSW>(dim, M, metric);
     return VecodexSegment(std::move(index_ptr));
+}
+
+const IndexConfig& VecodexSegmentFactory::getConfig() const {
+    return config_;
 }

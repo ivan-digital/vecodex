@@ -105,6 +105,18 @@ TEST(VecodexIndexTest, MergeSegments) {
 
     EXPECT_TRUE(check_meta(results, {"vec3"}));
 }
+TEST(VecodexIndexTest, AddVectorBatch) {
+    VecodexIndex index(3, IndexConfig(basic_flat));
+    std::vector<float> vectors(4 * 2); // n * dim
+    vectors[0] = vectors[1] = 1.0f;
+    vectors[2] = vectors[3] = 2.0f;
+    vectors[4] = vectors[5] = 0.1f;
+    vectors[6] = vectors[7] = 6.0f;
+    std::vector<IDType> ids = {"vec1", "vec2", "vec0", "vec6"};
+    index.add(4, ids.data(), vectors.data());
+    std::vector<IDType> results = index.search({3.0f, 3.0f}, 2);
+    EXPECT_TRUE(check_meta(results, {"vec2", "vec1"}));
+}
 
 int main(int argc, char **argv) {
     createBasicFlat(2);

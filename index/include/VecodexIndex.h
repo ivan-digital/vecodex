@@ -7,11 +7,13 @@
 class VecodexIndex {
 public:
     VecodexIndex(int segmentThreshold, const IndexConfig& config);
+    
+    void add(size_t n, const IDType* ids, const float* vectors);
 
-    void addVector(const std::string& id, const std::vector<float>& vector);
-    std::vector<std::string> search(const std::vector<float>& query, int k);
+    void addVector(const IDType& id, const std::vector<float>& vector);
+    std::vector<IDType> search(const std::vector<float>& query, int k);
 
-    void updateVector(const std::string& id, const std::vector<float>& vector);
+    void updateVector(const IDType& id, const std::vector<float>& vector);
     void mergeSegments();
 
 private:
