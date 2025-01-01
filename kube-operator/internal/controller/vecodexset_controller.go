@@ -84,8 +84,9 @@ func (r *VecodexSetReconciler) reconcileDeployment(ctx context.Context, logger l
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  name,
-							Image: spec.Image,
+							Name:      name,
+							Image:     spec.Image,
+							Resources: spec.Resources,
 						},
 					},
 				},

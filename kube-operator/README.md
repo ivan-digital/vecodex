@@ -29,12 +29,35 @@ spec:
   coordinator:
     image: "vecodex-coordinator-image:latest"
     replicas: 1
+    resources:
+      requests:
+        cpu: "125m"
+        memory: "128Mi"
+      limits:
+        cpu: "125m"
+        memory: "128Mi"
   writer:
     image: "vecodex-writer-image:latest"
     replicas: 1
+    resources:
+      requests:
+        cpu: "125m"
+        memory: "128Mi"
+      limits:
+        cpu: "125m"
+        memory: "128Mi"
+        # GPU (if your cluster has an NVIDIA GPU plugin)
+        nvidia.com/gpu: "1"
   searcher:
     image: "vecodex-searcher-image:latest"
     replicas: 3
+    resources:
+      requests:
+        cpu: "125m"
+        memory: "128Mi"
+      limits:
+        cpu: "125m"
+        memory: "128Mi"
   ingress:
     host: "search.vecodex.link"
 ```
@@ -47,6 +70,8 @@ spec:
 | `writer`        | Configuration for the Writer component, including image and replicas.      |
 | `searcher`      | Configuration for the Searcher component, including image and replicas.    |
 | `ingress.host`  | The hostname for the ingress resource.                                     |
+
+Each component’s resources field follows the standard Kubernetes ResourceRequirements syntax. For example, you can specify requests and limits for CPU, memory, and even GPUs using nvidia.com/gpu (assuming you have set up the NVIDIA GPU support on your cluster).
 
 The operator uses this specification to create the following Kubernetes resources:
 - **Deployments**: For `coordinator`, `writer`, and `searcher`.
@@ -79,6 +104,27 @@ make generate
 make manifests
 ```
 [Kubernetes Operator SDK architecture](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/)
+
+## Enabling GPU Support
+
+If you want to request GPU resources (for example, `nvidia.com/gpu`) in your `VecodexSet` spec, you first need to configure your Kubernetes cluster to support GPUs. Below are some resources to help you get started:
+
+- [Kubernetes Docs: Manage Compute Resources for Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [Kubernetes Docs: Schedule GPUs](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
+- [NVIDIA GPU Operator Documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)
+- [NVIDIA Device Plugin for Kubernetes](https://github.com/NVIDIA/k8s-device-plugin)
+
+Once your cluster is configured for GPU scheduling, you can specify GPU requirements in the `resources.limits` field of your `VecodexSet` spec. For example:
+
+```yaml
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+    nvidia.com/gpu: "1"
 
 ## Building the Operator
 

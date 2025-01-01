@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,6 +32,8 @@ type VecodexSetSpec struct {
 type NodeSpec struct {
 	Image    string `json:"image"`
 	Replicas *int32 `json:"replicas"`
+	// +kubebuilder:default:={"requests":{"cpu":"100m","memory":"128Mi"},"limits":{"cpu":"100m","memory":"128Mi"}}
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type IngressSpec struct {
