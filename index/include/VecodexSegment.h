@@ -27,6 +27,14 @@ public:
 
     void mergeSegment(VecodexSegment& other);
 
+    const IDType* getIDs() const {
+        return ids_.data();
+    }
+
+    const std::unique_ptr<faiss::Index>& getIndex() const {
+        return index_;
+    }
+
     size_t size() const {
         return ids_.size();
     }

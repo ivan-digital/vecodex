@@ -63,7 +63,9 @@ void VecodexIndex::mergeSegments() {
     }
     VecodexSegment mergedSegment(factory_.createIndexSegment());
     for (auto& segment : segments_) {
-        mergedSegment.mergeSegment(segment);
+        std::vector<float> vectors(segment.getIndex()->ntotal * segment.getIndex()->d);
+        segment.getIndex()->reconstruct_n(0, segment.size(), vectors.data());
+        mergedSegment.addVectorBatch(segment.size(), segment.getIDs(), vectors.data());
     }
     segments_.clear();
     segments_.push_back(std::move(mergedSegment));
