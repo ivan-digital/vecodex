@@ -103,6 +103,9 @@ add_library(proto-objects ${SRCS} ${HDRS})
 target_link_libraries(proto-objects "${_GRPC_GRPCPP}" "${_PROTOBUF_LIBPROTOBUF}" "${_REFLECTION}")
 target_include_directories(proto-objects PUBLIC "$<BUILD_INTERFACE:${PROTO_BINARY_DIR}>")
 
+# Boost
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
 
 # Main executable
 file(GLOB SRC_LIST src/*.cpp)
@@ -111,8 +114,9 @@ add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 target_link_libraries(${PROJECT_NAME} argparse ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
 target_link_libraries(${PROJECT_NAME} aws-cpp-sdk-core aws-cpp-sdk-s3 vecodex-index)
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ../index/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ../index/include) # todo: doesn't work because of external
 
 
 # Example client

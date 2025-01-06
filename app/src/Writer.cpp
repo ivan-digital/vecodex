@@ -20,7 +20,7 @@ void Writer::Run() {
 }
 
 void Writer::receiveUpdate(const std::string& id, const std::vector<float>& vector, const std::unordered_map <std::string, std::string>& attributes) {
-    index->addVector(id, vector); // todo: callbacks
+    index->addVector(id, vector, pushUpdate); // todo: callbacks in index
 }
 
 void Writer::pushUpdate(const VecodexSegment& segment) {

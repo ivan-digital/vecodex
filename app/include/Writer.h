@@ -3,19 +3,11 @@
 #include "base.h"
 #include "VecodexIndex.h"
 #include "StorageClient.h"
+#include "ThreadPool.h"
 
 #include <vector>
 #include <string>
 #include <unordered_map>
-
-#include <aws/core/Aws.h>
-#include <aws/core/auth/AWSCredentialsProvider.h>
-#include <aws/s3/model/PutObjectRequest.h>
-#include <aws/s3/S3Client.h>
-
-using namespace Aws;
-using namespace Aws::Auth;
-
 
 class Writer : public BaseServer {
 public:
