@@ -1,26 +1,32 @@
 #pragma once
 #include <unordered_map>
 #include <string>
+#include <functional>
+#include <memory>
 
 #include "faiss/MetricType.h"
 
-enum IndexType {
-    Flat,
-    HNSW
-};
 
+template<class Index> 
 class IndexConfig {
 public:
-    IndexConfig(std::istream& in);
+    using AddFuncType = std::function<void(const std::unique_ptr<Index>&, size_t, const float*)>;
+    using SearchFuncType = std::function<void(const std::unique_ptr<Index>&, size_t, const float*, float*, size_t*)>;
+    using MergeFuncType = std::function<void(const std::unique_ptr<Index>&, std::unique_ptr<Index>&&)>;
+    IndexConfig(AddFuncType add, SearchFuncType search, MergeFuncType merge): add_(add), search_(search), merge_(merge) {}
+    AddFuncType getAdd() const {
+        return add_;
+    }
 
-    IndexConfig(std::string_view config_file);
+    SearchFuncType getSearch() const {
+        return search_;
+    }
 
-    IndexType type;
-    int dim;
-    faiss::MetricType metric;
-    int M = 32;
-
+    MergeFuncType getMerge() const {
+        return merge_;
+    }
 private:
-    void readConfig(std::istream& in);
-    
+    AddFuncType add_;
+    SearchFuncType search_;
+    MergeFuncType merge_;
 };
