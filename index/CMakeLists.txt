@@ -96,15 +96,10 @@ endif()
 
 # Main Library Target
 add_library(vecodex-index
-    src/VecodexIndex.cpp
-    src/VecodexSegment.cpp
-    src/DocumentMetadata.cpp
-    src/VecodexSegmentFactory.cpp
-    src/IndexConfig.cpp
-    include/VecodexIndex.h
-    include/VecodexSegment.h
-    include/DocumentMetadata.h
-    include/VecodexSegmentFactory.h
+    src/Segment.cpp
+    include/Index.h
+    include/Segment.h
+    include/SegmentFactory.h
     include/IndexConfig.h
 )
 
