@@ -113,10 +113,14 @@ file(GLOB SRC_LIST src/*.cpp)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 target_link_libraries(${PROJECT_NAME} argparse ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
-target_link_libraries(${PROJECT_NAME} aws-cpp-sdk-core aws-cpp-sdk-s3 vecodex-index)
+target_link_libraries(${PROJECT_NAME} aws-cpp-sdk-core aws-cpp-sdk-s3)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ../index/include) # todo: doesn't work because of external
+
+# Include index
+add_subdirectory(../index ${PROJECT_BINARY_DIR}/index)
+target_link_libraries(${PROJECT_NAME} vecodex-index)
+target_include_directories(${PROJECT_NAME} PRIVATE ../index/include)
 
 
 # Example client
