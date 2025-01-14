@@ -67,3 +67,20 @@ bool StorageClient::getObject(const std::string& bucket_name, const std::string&
     return outcome.IsSuccess();
 }
 
+bool StorageClient::delObject(const std::string& bucket_name, const std::string& filename) {
+    Aws::S3::Model::DeleteObjectRequest request;
+    request.WithKey(filename).WithBucket(bucket_name);
+
+    Aws::S3::Model::DeleteObjectOutcome outcome = s3Client->DeleteObject(request);
+
+    if (!outcome.IsSuccess()) {
+        auto err = outcome.GetError();
+        std::cerr << "Error: deleteObject: " << err.GetExceptionName() << ": " << err.GetMessage() << std::endl;
+    }
+    else {
+        std::cout << "Successfully deleted the object." << std::endl;
+    }
+
+    return outcome.IsSuccess();
+}
+

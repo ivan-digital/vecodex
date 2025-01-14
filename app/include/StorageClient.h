@@ -9,6 +9,7 @@
 #include <aws/core/auth/AWSCredentialsProvider.h>
 #include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
+#include <aws/s3/model/DeleteObjectRequest.h>
 
 
 class StorageClient {
@@ -22,6 +23,8 @@ public:
     bool putObject(const std::string& bucket_name, const std::string& filename);
 
     bool getObject(const std::string& bucket_name, const std::string& filename);
+
+    bool delObject(const std::string& bucket_name, const std::string& filename);
 
 private:
     Aws::SDKOptions options;
