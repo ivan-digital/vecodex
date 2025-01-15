@@ -96,25 +96,20 @@ endif()
 
 # Main Library Target
 add_library(vecodex-index
-    src/VecodexIndex.cpp
-    src/VecodexSegment.cpp
-    src/DocumentMetadata.cpp
-    src/VecodexSegmentFactory.cpp
-    src/IndexConfig.cpp
-    include/VecodexIndex.h
-    include/VecodexSegment.h
-    include/DocumentMetadata.h
-    include/VecodexSegmentFactory.h
+    src/Segment.cpp
+    include/Index.h
+    include/Segment.h
+    include/SegmentFactory.h
     include/IndexConfig.h
 )
 
 target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # Test Executable
-add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
+add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp baselines/faiss.cpp)
 add_test(NAME test_index_basic COMMAND VecodexIndexTest)
 
-
+target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 # Link Libraries to Main Library Target
 target_link_libraries(vecodex-index PRIVATE jsoncpp_lib faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
