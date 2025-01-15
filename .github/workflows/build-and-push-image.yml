@@ -28,3 +28,4 @@ jobs:
           cd app
           docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
