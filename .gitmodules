@@ -1,3 +1,6 @@
+[submodule "app/external/grpc"]
+	path = app/external/grpc
+	url = https://github.com/grpc/grpc
 [submodule "index/external/faiss"]
 	path = index/external/faiss
 	url = https://github.com/facebookresearch/faiss.git
