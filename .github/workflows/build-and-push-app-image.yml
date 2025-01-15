@@ -2,7 +2,7 @@ name: Build and Push Coordinator image
 
 on:
   pull_request:
-     types: [ "closed" ]
+    types: [ "closed" ]
 
 env:
   REGISTRY: ghcr.io
@@ -10,21 +10,21 @@ env:
 
 jobs:
   build_and_push:
-
     runs-on: ubuntu-latest
     steps:
-    
-    - name: Log in to the Container registry
-      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - uses: actions/checkout@v4
-      name: Build and Push the Docker image
-      if: github.event.pull_request.merged == true
-      run: |
-        cd app
-        docker build . -t ${{ env.REGISTRY }}/${ env.IMAGE_NAME }:latest
-        docker push ${{ env.REGISTRY }}/${ env.IMAGE_NAME }:latest
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build and Push the Docker image
+        if: github.event.pull_request.merged == true
+        run: |
+          cd app
+          docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
