@@ -3,7 +3,15 @@ FROM gcc:latest
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y cmake
+    apt-get install -y \
+      build-essential \
+      autoconf \
+      libtool \
+      pkg-config \
+      cmake \
+      libssl-dev \
+      zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY build.sh CMakeLists.txt /app
 COPY ./examples/ /app/examples/
