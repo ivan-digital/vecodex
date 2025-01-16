@@ -21,6 +21,8 @@ jobs:
 
       - name: Check out the repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build and Push the Docker image
         if: github.event.pull_request.merged == true
