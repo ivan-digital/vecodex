@@ -20,8 +20,6 @@ COPY ./external/ /app/external
 COPY ./include/ /app/include
 COPY ./src/ /app/src
 
-RUN ls -la
-
 RUN ./build.sh
 
 CMD ./build/vecodex-app coordinator

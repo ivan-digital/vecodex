@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "coordinator.h"
+#include "searcher.h"
 
 
 int main(int argc, char* argv[]) {
@@ -27,6 +28,10 @@ int main(int argc, char* argv[]) {
         .help("...");
     program.add_argument("--s3-host")
         .help("...");
+    program.add_argument("--searcher-hosts")
+        .help("...")
+        .nargs(argparse::nargs_pattern::any)
+        .default_value(std::vector<std::string>());
 
     try {
         program.parse_args(argc, argv);
@@ -41,13 +46,21 @@ int main(int argc, char* argv[]) {
     const std::string listening_port = program.get("--listening-port");
 
     if (program_mode == "searcher") {
+        Searcher server = Searcher("localhost", listening_port);
+        server.Run();
         // TODO
     }
     if (program_mode == "writer") {
         // TODO
     }
     if (program_mode == "coordinator") {
-        Coordinator server = Coordinator("localhost", listening_port);
+        const auto searcher_hosts = program.get<std::vector<std::string>>("--searcher-hosts");
+
+        for (size_t i = 0; i < searcher_hosts.size(); ++i) {
+            std::cout << searcher_hosts[i] << "\n";
+        }
+
+        Coordinator server = Coordinator("localhost", listening_port, searcher_hosts);
         server.Run();
         // TODO
     }

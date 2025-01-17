@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     }
 
     CoordinatorClient client = CoordinatorClient(
-        grpc::CreateChannel("127.0.0.1:" + port, grpc::InsecureChannelCredentials())
+        grpc::CreateChannel("0.0.0.0:" + port, grpc::InsecureChannelCredentials())
     );
 
     service::Document doc;
@@ -23,5 +23,5 @@ int main(int argc, char* argv[]) {
     *req.mutable_data() = doc;
 
     auto resp = client.getProcessedDocuments(req);
-    std::cout << resp.result(0).id() << std::endl;
+    std::cout << resp.DebugString() << std::endl;
 }
