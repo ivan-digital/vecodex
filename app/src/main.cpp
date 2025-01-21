@@ -1,4 +1,3 @@
-
 #include <argparse/argparse.hpp>
 #include <stdio.h>
 #include <string>
@@ -32,6 +31,9 @@ int main(int argc, char* argv[]) {
         .help("...")
         .nargs(argparse::nargs_pattern::any)
         .default_value(std::vector<std::string>());
+    program.add_argument("--etcd-addr")
+        .help("...")
+        .default_value("http://localhost:2379");
 
     try {
         program.parse_args(argc, argv);
@@ -44,9 +46,10 @@ int main(int argc, char* argv[]) {
     const std::string program_mode = program.get("mode");
     const std::string output_port = program.get("--output-port");
     const std::string listening_port = program.get("--listening-port");
+    const std::string etcd_addr = program.get("--etcd-addr");
 
     if (program_mode == "searcher") {
-        Searcher server = Searcher("localhost", listening_port);
+        Searcher server = Searcher("localhost", listening_port, etcd_addr);
         server.Run();
         // TODO
     }
@@ -54,13 +57,7 @@ int main(int argc, char* argv[]) {
         // TODO
     }
     if (program_mode == "coordinator") {
-        const auto searcher_hosts = program.get<std::vector<std::string>>("--searcher-hosts");
-
-        for (size_t i = 0; i < searcher_hosts.size(); ++i) {
-            std::cout << searcher_hosts[i] << "\n";
-        }
-
-        Coordinator server = Coordinator("localhost", listening_port, searcher_hosts);
+        Coordinator server = Coordinator("localhost", listening_port, etcd_addr);
         server.Run();
         // TODO
     }

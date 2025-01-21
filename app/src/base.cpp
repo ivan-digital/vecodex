@@ -5,7 +5,7 @@
 #include <grpcpp/server_builder.h>
 
 
-BaseServer::BaseServer(const std::string& host, const std::string& port)
+BaseServer::BaseServer(const std::string& host, const std::string& port, const std::string& etcd_addr)
     : host(host), port(port) {}
 
 void BaseServer::InternalRun(BaseService::Service& service) {

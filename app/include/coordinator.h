@@ -2,6 +2,7 @@
 
 #include <grpc/grpc.h>
 #include <grpcpp/server_context.h>
+#include <unordered_map>
 
 #include "service.pb.h"
 #include "service.grpc.pb.h"
@@ -15,16 +16,17 @@ using service::BaseService;
 
 class CoordinatorImpl final : public BaseService::Service {
 public:
-    explicit CoordinatorImpl(const std::vector<std::string>& searcher_hosts);
+    explicit CoordinatorImpl(const std::string& etcd_addr);
     ~CoordinatorImpl() {}
     grpc::Status ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) override;
 
 private:
-    SearchResponse AskSingleSearcher(size_t id, const SearchRequest* request) const;
+    SearchResponse AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const;
 
-    std::vector<std::string> searcher_hosts;
+    void UpdateSearchersState();
 
-    std::vector<SearcherClient> searcher_clients;
+    std::unordered_map<std::string, SearcherClient> searcher_clients;
+    EtcdClient etcd_client;
 };
 
 
@@ -33,7 +35,7 @@ public:
     Coordinator(
         const std::string& host,
         const std::string& port,
-        const std::vector<std::string>& searcher_hosts
+        const std::string& etcd_addr
     );
     void Run() override;
 private:

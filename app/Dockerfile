@@ -3,15 +3,11 @@ FROM gcc:latest
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y \
-      build-essential \
-      autoconf \
-      libtool \
-      pkg-config \
-      cmake \
-      libssl-dev \
-      zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y cmake \
+    libssl-dev \ 
+    libcpprest-dev \
+    libc++-dev
+RUN apt-get install -y libboost-dev
 
 COPY build.sh CMakeLists.txt /app
 COPY ./examples/ /app/examples/

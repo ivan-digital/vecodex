@@ -7,20 +7,17 @@
 #include <grpcpp/security/credentials.h>
 
     
-CoordinatorImpl::CoordinatorImpl(const std::vector<std::string>& searcher_hosts) 
-    : searcher_hosts(std::move(searcher_hosts)) {
-    for (size_t i = 0; i < searcher_hosts.size(); ++i) {
-        searcher_clients.push_back(
-            SearcherClient(grpc::CreateChannel(searcher_hosts[i], grpc::InsecureChannelCredentials()))
-        );
-    }
+CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr) 
+    : etcd_client(EtcdClient(etcd_addr)) {
+    UpdateSearchersState();
 }
 
 grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
     std::cout << "Hello from Coordinator Server!" << std::endl;
     
-    for (size_t i = 0; i < searcher_hosts.size(); ++i) { 
-        std::cout << "searcher " << i << " returned:\n" << AskSingleSearcher(i, request).DebugString() << std::endl;
+    UpdateSearchersState();
+    for (auto& client: searcher_clients) { 
+        std::cout << "searcher" << " returned:\n" << AskSingleSearcher(client.second, request).DebugString() << std::endl;
     }
 
     auto new_document = response->add_result();
@@ -28,13 +25,22 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-SearchResponse CoordinatorImpl::AskSingleSearcher(size_t searcher_id, const SearchRequest* request) const {
-    return searcher_clients[searcher_id].getProcessedDocuments(*request);
+SearchResponse CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const {
+    return client.getProcessedDocuments(*request);
+}
+
+void CoordinatorImpl::UpdateSearchersState() {
+    searcher_clients.clear();
+    auto searcher_hosts = etcd_client.ListSearcherHostsByIndexId("0");
+    for (const auto& host : searcher_hosts) {
+        std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
+        searcher_clients.emplace(host, SearcherClient(channel));
+    }
 }
 
 
-Coordinator::Coordinator(const std::string& host, const std::string& port, const std::vector<std::string>& searcher_hosts) 
-    : BaseServer(host, port), service(CoordinatorImpl(searcher_hosts)) {}
+Coordinator::Coordinator(const std::string& host, const std::string& port, const std::string& etcd_addr) 
+    : BaseServer(host, port, etcd_addr), service(CoordinatorImpl(etcd_addr)) {}
 
 void Coordinator::Run() {
     InternalRun(service); 

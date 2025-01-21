@@ -11,6 +11,8 @@ cmake -DgRPC_INSTALL=ON \
       -DgRPC_SSL_PROVIDER=module \
       -DgRPC_ZLIB_PROVIDER=module \
       -DCMAKE_INSTALL_PREFIX=/app \
+      -DRE2_BUILD_TESTING=OFF \
       ..
 make -j8 vecodex-app
-make -j8 example_client
+# make -j8 example_client
+# make -j8 etcd_client

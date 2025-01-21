@@ -1,0 +1,30 @@
+services:
+  coordinator:
+    image: app:latest
+    ports:
+      - "8000:44400"
+      - "8001:44401"
+    command: ./build/vecodex-app coordinator --searcher-hosts searcher_1:44400 searcher_2:44400
+    depends_on:
+      searcher_1:
+        condition: service_started
+      searcher_2:
+        condition: service_started
+  searcher_1:
+    image: app:latest
+    ports:
+      - "8002:44400"
+    command: ./build/vecodex-app searcher
+  searcher_2:
+    image: app:latest
+    ports:
+      - "8003:44400"
+    command: ./build/vecodex-app searcher
+  etcd:
+    image: bitnami/etcd:latest
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - 2379:2379
+      - 2380:2380
