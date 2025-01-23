@@ -6,7 +6,7 @@
 #include "Segment.h"
 #include "SegmentFactory.h"
 namespace vecodex {
-template <class IndexType, typename... ArgTypes>
+template <class IndexType, class IDType, typename... ArgTypes>
 class Index {
    public:
 	Index(int dim, int segmentThreshold, IndexConfig<IndexType> config,
@@ -36,7 +36,7 @@ class Index {
 	}
 
 	std::vector<IDType> search(const std::vector<float>& query, int k) {
-		std::set<SearchResult> kth_stat;
+		std::set<SearchResult<IDType>> kth_stat;
 		for (const auto& segment : segments_) {
 			auto segmentResults = segment.search(query, k);
 			for (const auto& p : segmentResults) {
@@ -55,23 +55,27 @@ class Index {
 	}
 
 	void updateVector(const IDType& id, const std::vector<float>& vector);
-	void mergeSegments() {
+	std::vector<size_t> mergeSegments() {
 		if (segments_.size() == 1) {
-			return;
+			return {};
 		}
+		std::vector<size_t> erased_segments_;
 		vecodex::Segment mergedSegment(factory_.create(config_));
 		for (auto&& segment : segments_) {
+			erased_segments_.push_back(segment.getID());
 			mergedSegment.mergeSegment(std::move(segment));
 		}
 		segments_.clear();
 		segments_.push_back(std::move(mergedSegment));
+		return erased_segments_;
 	}
+	size_t size() const { return segments_.size(); }
 
    private:
 	int d_;
 	size_t segmentThreshold_;
 	IndexConfig<IndexType> config_;
-	SegmentFactory<IndexType, ArgTypes...> factory_;
-	std::vector<Segment<IndexType>> segments_;
+	SegmentFactory<IndexType, IDType, ArgTypes...> factory_;
+	std::vector<Segment<IndexType, IDType>> segments_;
 };
 }  // namespace vecodex

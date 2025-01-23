@@ -1,9 +1,9 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
-#include <optional>
 
 #include "faiss/MetricType.h"
 namespace vecodex {
@@ -17,8 +17,8 @@ class IndexConfig {
 						   const float*, float*, size_t*)>;
 	using MergeFuncType = std::function<void(const std::unique_ptr<IndexType>&,
 											 std::unique_ptr<IndexType>&&)>;
-	using DeleteFuncType =
-		std::function<void(const std::unique_ptr<IndexType>&, size_t)>;
+	using DeleteFuncType = std::function<void(const std::unique_ptr<IndexType>&,
+											  size_t, const size_t*)>;
 	IndexConfig(AddFuncType add_func, SearchFuncType search_func,
 				MergeFuncType merge_func,
 				std::optional<DeleteFuncType> delete_func = std::nullopt)
@@ -31,6 +31,10 @@ class IndexConfig {
 	SearchFuncType getSearch() const { return search_; }
 
 	MergeFuncType getMerge() const { return merge_; }
+
+	bool hasDelete() const { return delete_.has_value(); }
+
+	std::optional<DeleteFuncType> getDelete() const { return delete_; }
 
    private:
 	AddFuncType add_;
