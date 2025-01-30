@@ -1,6 +1,8 @@
 #pragma once
 
 #include "base.h"
+#include "service.pb.h"
+#include "service.grpc.pb.h"
 #include "VecodexIndex.h"
 #include "StorageClient.h"
 #include "ThreadPool.h"
@@ -9,21 +11,35 @@
 #include <string>
 #include <unordered_map>
 
-class Writer : public BaseServer {
+using service::BaseService;
+using service::WriteRequest;
+using service::WriteResponse;
+
+class WriterImpl final : public BaseService::Service {
 public:
-    Writer(const std::string& host, const std::string& port, const std::string& s3_host, size_t threshold, const std::string& config_filename);
+    WriterImpl(const std::string& s3_host, size_t threshold, const std::string& config_filename);
 
-    ~Writer();
+    ~WriterImpl();
 
-    void Run();
+    grpc::Status ProcessWriteRequest(grpc::ServerContext* context, const WriteRequest* request, WriteResponse* response) override;
 
 private:
-    void receiveUpdate(const std::string& id, const std::vector<float>& vector, const std::unordered_map <std::string, std::string>& attributes);
+    void updateIndex(int id, const std::vector<float>& vector, const std::unordered_map<std::string, std::string>& attributes);
 
-    void pushUpdate(const VecodexSegment& segment);
+    void pushUpdate();
 
     std::string s3_host;
     std::optional<VecodexIndex> index;
     std::optional<StorageClient> storage_client;
+};
+
+class Writer : public BaseServer {
+public:
+    Writer(const std::string& host, const std::string& port, const std::string& s3_host, size_t threshold, const std::string& config_filename);
+
+    void Run() override;
+
+private:
+    WriterImpl service;
 };
 

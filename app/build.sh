@@ -14,3 +14,4 @@ cmake -DgRPC_INSTALL=ON \
       ..
 make -j8 vecodex-app
 make -j8 example_client
+make -j8 writer_client

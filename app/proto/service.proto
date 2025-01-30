@@ -5,6 +5,7 @@ package service;
 message Document {
     repeated float vector_data = 1;
     int32 id = 2;
+    map<string, string> attributes = 3;
     // what else should be here ?
 }
 
@@ -19,6 +20,15 @@ message SearchResponse {
     // what else should be here ?
 }
 
+message WriteRequest {
+    Document data = 1;
+}
+
+message WriteResponse {
+    int32 id = 1; // document id (maybe useless)
+}
+
 service BaseService {
     rpc ProcessSearchRequest (SearchRequest) returns (SearchResponse) {}
+    rpc ProcessWriteRequest (WriteRequest) returns (WriteResponse) {}
 }
