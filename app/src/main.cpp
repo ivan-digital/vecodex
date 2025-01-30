@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     }
     if (program_mode == "writer") {
         const std::string s3_host = program.get("--s3-host");
-        auto threshold = program.get<size_t>("--threshold");
+        size_t threshold = stoul(program.get("--threshold"));
         const std::string config_filename = program.get("--config");
         Writer server = Writer("localhost", listening_port, s3_host, threshold, config_filename);
         server.Run();

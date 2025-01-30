@@ -48,6 +48,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(aws-cpp-sdk)
 
 # gRPC
+set(ABSL_ENABLE_INSTALL ON)
 add_subdirectory(external/grpc EXCLUDE_FROM_ALL)
 message(STATUS "Using gRPC via add_subdirectory.")
 
@@ -127,3 +128,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE ../index/include)
 add_executable(example_client ${PROJECT_SOURCE_DIR}/examples/run_client.cpp ${PROJECT_SOURCE_DIR}/src/coordinator.cpp ${PROJECT_SOURCE_DIR}/src/base.cpp)
 target_link_libraries(example_client argparse ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
 target_include_directories(example_client PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})
+
+# Writer client
+add_executable(writer_client
+        ${PROJECT_SOURCE_DIR}/examples/run_writer_client.cpp
+        ${PROJECT_SOURCE_DIR}/src/WriterClient.cpp)
+target_link_libraries(writer_client ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
+target_include_directories(writer_client PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})

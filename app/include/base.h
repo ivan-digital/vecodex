@@ -11,7 +11,7 @@ public:
 
     ~BaseServer() {}
 
-    void Run();
+    virtual void Run() = 0;
 protected:
     std::string host;
     std::string port;
