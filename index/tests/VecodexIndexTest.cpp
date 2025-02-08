@@ -1,11 +1,34 @@
 // tests/VecodexIndexTest.cpp
 
 #include <iostream>
+#include <random>
 #include <unordered_set>
 #include "Index.h"
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
+using ConfigHNSWType = vecodex::IndexConfig<
+	baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
+using IndexHNSWType =
+	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
+				   std::string, int, int, faiss::MetricType>;
+using ConfigFlatType =
+	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
+using IndexFlatType =
+	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
+				   std::string, int, faiss::MetricType>;
+
+ConfigHNSWType config_hnsw(
+	baseline::IndexAdd<faiss::IndexHNSWFlat, std::string>,
+	baseline::IndexSearch<faiss::IndexHNSWFlat, std::string>,
+	baseline::IndexMerge<faiss::IndexHNSWFlat, std::string>,
+	baseline::IndexDelete<faiss::IndexHNSWFlat, std::string>);
+ConfigFlatType config_flat(
+	baseline::IndexAdd<faiss::IndexFlat, std::string>,
+	baseline::IndexSearch<faiss::IndexFlat, std::string>,
+	baseline::IndexMerge<faiss::IndexFlat, std::string>,
+	baseline::IndexDelete<faiss::IndexFlat, std::string>);
+
 template <class IDType>
 bool check_meta(const std::vector<IDType>& out_meta,
 				const std::vector<IDType>& true_meta) {
@@ -27,16 +50,11 @@ bool check_meta(const std::vector<IDType>& out_meta,
 TEST(VecodexIndexTest, AddAndSearchVector) {
 
 	// Initialize index with 2 dimensions and segment threshold of 5
-	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>
-		config(baseline::IndexFlatAdd<std::string>,
-			   baseline::IndexFlatSearch<std::string>,
-			   baseline::IndexFlatMerge<std::string>);
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-				   std::string, int, faiss::MetricType>
-		index(2, 3, config, {2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 3, config_hnsw,
+						{2, 2, faiss::MetricType::METRIC_L2});
 
 	// Add some vectors
-	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.0f}};
+	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
 	std::vector<std::string> ids = {"vec1", "vec2"};
 	index.add(2, ids.data(), (float*)vectors);
 	std::vector<float> query = {1.5f, 2.5f};
@@ -48,13 +66,7 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
 }
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Initialize index with 2 dimensions and segment threshold of 3
-	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>
-		config(baseline::IndexFlatAdd<std::string>,
-			   baseline::IndexFlatSearch<std::string>,
-			   baseline::IndexFlatMerge<std::string>);
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-				   std::string, int, faiss::MetricType>
-		index(2, 3, config, {2, faiss::MetricType::METRIC_L2});
+	IndexFlatType index(2, 3, config_flat, {2, faiss::MetricType::METRIC_L2});
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -71,13 +83,7 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 
 TEST(VecodexIndexTest, MergeSegments) {
 	// Initialize index with 2 dimensions and segment threshold of 2
-	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>
-		config(baseline::IndexFlatAdd<std::string>,
-			   baseline::IndexFlatSearch<std::string>,
-			   baseline::IndexFlatMerge<std::string>);
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-				   std::string, int, faiss::MetricType>
-		index(2, 2, config, {2, faiss::MetricType::METRIC_L2});
+	IndexFlatType index(2, 2, config_flat, {2, faiss::MetricType::METRIC_L2});
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3"};
@@ -93,15 +99,9 @@ TEST(VecodexIndexTest, MergeSegments) {
 	EXPECT_TRUE(check_meta(results, {"vec3"}));
 }
 
-TEST(VecodexIndexTest, HNSWSearch) {
-	vecodex::IndexConfig<
-		baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>
-		config(baseline::IndexHNSWAdd<std::string>,
-			   baseline::IndexHNSWSearch<std::string>,
-			   baseline::IndexHNSWMerge<std::string>);
-	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
-				   std::string, int, int, faiss::MetricType>
-		index(2, 2, config, {2, 2, faiss::MetricType::METRIC_L2});
+TEST(VecodexIndexTest, Search) {
+	IndexHNSWType index(2, 2, config_hnsw,
+						{2, 2, faiss::MetricType::METRIC_L2});
 
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
@@ -115,15 +115,8 @@ TEST(VecodexIndexTest, HNSWSearch) {
 }
 
 TEST(VecodexIndexTest, Delete) {
-	vecodex::IndexConfig<
-		baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>
-		config(baseline::IndexHNSWAdd<std::string>,
-			   baseline::IndexHNSWSearch<std::string>,
-			   baseline::IndexHNSWMerge<std::string>,
-			   baseline::IndexHNSWDelete<std::string>);
-	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
-				   std::string, int, int, faiss::MetricType>
-		index(2, 2, config, {2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 2, config_hnsw,
+						{2, 2, faiss::MetricType::METRIC_L2});
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
 	vectors[2] = vectors[3] = 2.0f;
@@ -141,6 +134,61 @@ TEST(VecodexIndexTest, Delete) {
 	EXPECT_TRUE(check_meta(results, {"vec6"}));
 }
 
+TEST(VecodexIndexTest, Basic) {
+	const size_t dim = 100;
+	const size_t threshold = 1000;
+	IndexHNSWType index_hnsw(dim, threshold, config_hnsw,
+							 {dim, 2, faiss::MetricType::METRIC_L2});
+
+	IndexFlatType index_flat(dim, threshold, config_flat,
+							 {dim, faiss::MetricType::METRIC_L2});
+	const size_t vec_num = 3;
+	const float max_num = 10;
+	const int k = 3;
+	std::vector<float> vectors(vec_num * dim);
+	std::vector<float> search_vec(dim);
+	std::vector<std::string> ids(vec_num);
+	size_t tests = 4000;
+	long long sum_flat = 0;
+	long long sum_hnsw = 0;
+	size_t sz_hnsw = 0;
+	size_t sz_flat = 0;
+	for (size_t i = 0; i < tests; ++i) {
+		for (size_t j = 0; j < vectors.size(); ++j) {
+			vectors[j] = static_cast<float>(std::rand()) /
+						 (static_cast<float>(RAND_MAX / max_num));
+		}
+		for (size_t j = 0; j < ids.size(); ++j) {
+			ids[j] = "vec" + std::to_string(i) + "#" + std::to_string(j);
+		}
+
+		index_flat.add(ids.size(), ids.data(), vectors.data());
+		index_hnsw.add(ids.size(), ids.data(), vectors.data());
+
+		for (size_t j = 0; j < search_vec.size(); ++j) {
+			search_vec[j] = static_cast<float>(std::rand()) /
+							(static_cast<float>(RAND_MAX / max_num));
+		}
+		auto start = std::chrono::high_resolution_clock::now();
+		auto flat_res = index_flat.search(search_vec, k);
+		auto end = std::chrono::high_resolution_clock::now();
+		sum_flat +=
+			std::chrono::duration_cast<std::chrono::nanoseconds>(end - start)
+				.count();
+
+		start = std::chrono::high_resolution_clock::now();
+		auto hnsw_res = index_hnsw.search(search_vec, k);
+		end = std::chrono::high_resolution_clock::now();
+		sum_hnsw +=
+			std::chrono::duration_cast<std::chrono::nanoseconds>(end - start)
+				.count();
+		sz_flat += flat_res.size();
+		sz_hnsw += hnsw_res.size();
+		EXPECT_TRUE(sz_flat == sz_hnsw);
+	}
+	std::cout << std::fixed << "flat: " << static_cast<float>(sum_flat) / tests
+			  << "ns, hnsw: " << static_cast<float>(sum_hnsw) / tests << "ns\n";
+}
 int main(int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

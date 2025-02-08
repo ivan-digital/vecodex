@@ -85,58 +85,28 @@ class FaissIndex : public BaseIndex {
 	std::unordered_map<faiss::idx_t, IDType> inv_ids_;
 };
 
-template <typename IDType>
-void IndexFlatAdd(
-	const std::unique_ptr<FaissIndex<faiss::IndexFlat, IDType>>& index,
-	size_t n, const float* vectors, const IDType* ids) {
+template <typename faissIndex, typename IDType>
+void IndexAdd(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
+			  size_t n, const float* vectors, const IDType* ids) {
 	index->add_batch(n, vectors, ids);
 }
 
-template <typename IDType>
-size_t IndexFlatSearch(
-	const std::unique_ptr<FaissIndex<faiss::IndexFlat, IDType>>& index,
-	size_t k, const float* q, float* dist, IDType* ids) {
+template <typename faissIndex, typename IDType>
+size_t IndexSearch(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
+				   size_t k, const float* q, float* dist, IDType* ids) {
 	return index->single_search(k, q, dist, ids);
 }
 
-template <typename IDType>
-void IndexFlatMerge(
-	const std::unique_ptr<FaissIndex<faiss::IndexFlat, IDType>>& index,
-	std::unique_ptr<FaissIndex<faiss::IndexFlat, IDType>>&& other) {
+template <typename faissIndex, typename IDType>
+void IndexMerge(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
+				std::unique_ptr<FaissIndex<faissIndex, IDType>>&& other) {
 	index->merge_from_other(*other);
 }
 
-template <typename IDType>
-void IndexFlatDelete(
-	const std::unique_ptr<FaissIndex<faiss::IndexFlat, IDType>>& index,
-	size_t n, const IDType* ids) {
+template <typename faissIndex, typename IDType>
+void IndexDelete(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
+				 size_t n, const IDType* ids) {
 	index->erase_batch(n, ids);
 }
 
-template <typename IDType>
-void IndexHNSWAdd(
-	const std::unique_ptr<FaissIndex<faiss::IndexHNSWFlat, IDType>>& index,
-	size_t n, const float* vectors, const IDType* ids) {
-	index->add_batch(n, vectors, ids);
-}
-
-template <typename IDType>
-size_t IndexHNSWSearch(
-	const std::unique_ptr<FaissIndex<faiss::IndexHNSWFlat, IDType>>& index,
-	size_t k, const float* q, float* dist, IDType* ids) {
-	return index->single_search(k, q, dist, ids);
-}
-
-template <typename IDType>
-void IndexHNSWMerge(
-	const std::unique_ptr<FaissIndex<faiss::IndexHNSWFlat, IDType>>& index,
-	std::unique_ptr<FaissIndex<faiss::IndexHNSWFlat, IDType>>&& other) {
-	index->merge_from_other(*other);
-}
-template <typename IDType>
-void IndexHNSWDelete(
-	const std::unique_ptr<FaissIndex<faiss::IndexHNSWFlat, IDType>>& index,
-	size_t n, const IDType* ids) {
-	index->erase_batch(n, ids);
-}
 }  // namespace baseline
