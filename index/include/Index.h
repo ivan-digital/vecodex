@@ -56,7 +56,7 @@ class Index {
 	}
 
 	void erase(size_t n, const IDType* ids) {
-		for (size_t i = 0; i < n; ++i) {
+		for (size_t i = 0; i < segments_.size(); ++i) {
 			segments_[i].deleteBatch(n, ids);
 		}
 	}

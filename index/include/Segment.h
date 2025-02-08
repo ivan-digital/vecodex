@@ -34,11 +34,11 @@ class Segment {
 		config_.getAdd()(index_, n, vectors, ids);
 	}
 
-	void deleteVectorBatch(size_t n, const IDType* ids) {
+	void deleteBatch(size_t n, const IDType* ids) {
 		if (!config_.hasDelete()) {
 			throw std::runtime_error("No delete function for Index Segment");
 		}
-		config_.getDelete()(index_, n, ids);
+		config_.getDelete().value()(index_, n, ids);
 	}
 	// Mark search as const
 	std::unordered_map<IDType, float> search(const std::vector<float>& query,
