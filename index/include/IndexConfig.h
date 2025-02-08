@@ -7,18 +7,20 @@
 
 #include "faiss/MetricType.h"
 namespace vecodex {
-template <class IndexType>
+template <typename IndexType>
 class IndexConfig {
    public:
-	using AddFuncType = std::function<void(const std::unique_ptr<IndexType>&,
-										   size_t, const float*)>;
-	using SearchFuncType =
+	using AddFuncType =
 		std::function<void(const std::unique_ptr<IndexType>&, size_t,
-						   const float*, float*, size_t*)>;
+						   const float*, const typename IndexType::ID*)>;
+	using SearchFuncType =
+		std::function<size_t(const std::unique_ptr<IndexType>&, size_t,
+							 const float*, float*, typename IndexType::ID*)>;
 	using MergeFuncType = std::function<void(const std::unique_ptr<IndexType>&,
 											 std::unique_ptr<IndexType>&&)>;
-	using DeleteFuncType = std::function<void(const std::unique_ptr<IndexType>&,
-											  size_t, const size_t*)>;
+	using DeleteFuncType =
+		std::function<void(const std::unique_ptr<IndexType>&, size_t,
+						   const typename IndexType::ID*)>;
 	IndexConfig(AddFuncType add_func, SearchFuncType search_func,
 				MergeFuncType merge_func,
 				std::optional<DeleteFuncType> delete_func = std::nullopt)

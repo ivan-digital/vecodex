@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <iostream>
 #include <set>
 #include <vector>
@@ -54,19 +55,22 @@ class Index {
 		return results;
 	}
 
-	void updateVector(const IDType& id, const std::vector<float>& vector);
+	void erase(size_t n, const IDType* ids) {
+		for (size_t i = 0; i < n; ++i) {
+			segments_[i].deleteBatch(n, ids);
+		}
+	}
+
 	std::vector<size_t> mergeSegments() {
 		if (segments_.size() == 1) {
 			return {};
 		}
 		std::vector<size_t> erased_segments_;
-		vecodex::Segment mergedSegment(factory_.create(config_));
-		for (auto&& segment : segments_) {
-			erased_segments_.push_back(segment.getID());
-			mergedSegment.mergeSegment(std::move(segment));
+		while (segments_.size() > 1) {
+			erased_segments_.push_back(segments_.front().getID());
+			segments_.back().mergeSegment(std::move(segments_.front()));
+			segments_.pop_front();
 		}
-		segments_.clear();
-		segments_.push_back(std::move(mergedSegment));
 		return erased_segments_;
 	}
 	size_t size() const { return segments_.size(); }
@@ -76,6 +80,6 @@ class Index {
 	size_t segmentThreshold_;
 	IndexConfig<IndexType> config_;
 	SegmentFactory<IndexType, IDType, ArgTypes...> factory_;
-	std::vector<Segment<IndexType, IDType>> segments_;
+	std::deque<Segment<IndexType, IDType>> segments_;
 };
 }  // namespace vecodex

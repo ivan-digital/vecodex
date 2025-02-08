@@ -27,11 +27,13 @@ bool check_meta(const std::vector<IDType>& out_meta,
 TEST(VecodexIndexTest, AddAndSearchVector) {
 
 	// Initialize index with 2 dimensions and segment threshold of 5
-	vecodex::IndexConfig<faiss::IndexFlat> config(baseline::IndexFlatAdd,
-												  baseline::IndexFlatSearch,
-												  baseline::IndexFlatMerge);
-	vecodex::Index<faiss::IndexFlat, std::string, int, faiss::MetricType> index(
-		2, 3, config, {2, faiss::MetricType::METRIC_L2});
+	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>
+		config(baseline::IndexFlatAdd<std::string>,
+			   baseline::IndexFlatSearch<std::string>,
+			   baseline::IndexFlatMerge<std::string>);
+	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
+				   std::string, int, faiss::MetricType>
+		index(2, 3, config, {2, faiss::MetricType::METRIC_L2});
 
 	// Add some vectors
 	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.0f}};
@@ -46,11 +48,13 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
 }
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Initialize index with 2 dimensions and segment threshold of 3
-	vecodex::IndexConfig<faiss::IndexFlat> config(baseline::IndexFlatAdd,
-												  baseline::IndexFlatSearch,
-												  baseline::IndexFlatMerge);
-	vecodex::Index<faiss::IndexFlat, std::string, int, faiss::MetricType> index(
-		2, 3, config, {2, faiss::MetricType::METRIC_L2});
+	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>
+		config(baseline::IndexFlatAdd<std::string>,
+			   baseline::IndexFlatSearch<std::string>,
+			   baseline::IndexFlatMerge<std::string>);
+	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
+				   std::string, int, faiss::MetricType>
+		index(2, 3, config, {2, faiss::MetricType::METRIC_L2});
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -67,17 +71,19 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 
 TEST(VecodexIndexTest, MergeSegments) {
 	// Initialize index with 2 dimensions and segment threshold of 2
-	vecodex::IndexConfig<faiss::IndexFlat> config(baseline::IndexFlatAdd,
-												  baseline::IndexFlatSearch,
-												  baseline::IndexFlatMerge);
-	vecodex::Index<faiss::IndexFlat, std::string, int, faiss::MetricType> index(
-		2, 2, config, {2, faiss::MetricType::METRIC_L2});
+	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>
+		config(baseline::IndexFlatAdd<std::string>,
+			   baseline::IndexFlatSearch<std::string>,
+			   baseline::IndexFlatMerge<std::string>);
+	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
+				   std::string, int, faiss::MetricType>
+		index(2, 2, config, {2, faiss::MetricType::METRIC_L2});
 	float vectors[3][2] = {{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3"};
 	// Add vectors to create multiple segments
 	index.add(3, ids.data(), (float*)vectors);
 	// Merge segments
-	index.mergeSegments();
+	EXPECT_TRUE(index.mergeSegments().size() == 1);
 
 	// Verify that search still works correctly after merging
 	std::vector<float> query = {2.5f, 2.5f};
@@ -87,11 +93,13 @@ TEST(VecodexIndexTest, MergeSegments) {
 }
 
 TEST(VecodexIndexTest, HNSWSearch) {
-	vecodex::IndexConfig<faiss::IndexHNSWFlat> config(baseline::IndexHNSWAdd,
-													  baseline::IndexHNSWSearch,
-													  baseline::IndexHNSWMerge);
-	vecodex::Index<faiss::IndexHNSWFlat, std::string, int, int,
-				   faiss::MetricType>
+	vecodex::IndexConfig<
+		baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>
+		config(baseline::IndexHNSWAdd<std::string>,
+			   baseline::IndexHNSWSearch<std::string>,
+			   baseline::IndexHNSWMerge<std::string>);
+	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
+				   std::string, int, int, faiss::MetricType>
 		index(2, 2, config, {2, 2, faiss::MetricType::METRIC_L2});
 
 	std::vector<float> vectors(4 * 2);	// n * dim

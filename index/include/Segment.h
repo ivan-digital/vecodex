@@ -1,7 +1,6 @@
 #pragma once
 
 #include <IndexConfig.h>
-#include <faiss/IndexFlat.h>
 #include <iostream>
 #include <memory>
 #include <random>
@@ -29,12 +28,10 @@ class Segment {
 	Segment(Segment&& other)
 		: config_(std::move(other.config_)),
 		  index_(std::move(other.index_)),
-		  ids_(std::move(other.ids_)),
 		  seg_id_(std::move(other.seg_id_)) {}
 
 	void addVectorBatch(size_t n, const IDType* ids, const float* vectors) {
-		std::copy_n(ids, n, std::back_inserter(ids_));
-		config_.getAdd()(index_, n, vectors);
+		config_.getAdd()(index_, n, vectors, ids);
 	}
 
 	void deleteVectorBatch(size_t n, const IDType* ids) {
@@ -44,41 +41,33 @@ class Segment {
 		config_.getDelete()(index_, n, ids);
 	}
 	// Mark search as const
-	std::unordered_map<std::string, float> search(
-		const std::vector<float>& query, int k) const {
-		std::vector<faiss::idx_t> indices(k);
+	std::unordered_map<IDType, float> search(const std::vector<float>& query,
+											 int k) const {
+		std::vector<IDType> indices(k);
 		std::vector<float> distances(k);
-		config_.getSearch()(index_, k, query.data(), distances.data(),
-							(size_t*)indices.data());
+		size_t ans_k = config_.getSearch()(index_, k, query.data(),
+										   distances.data(), indices.data());
 		std::unordered_map<IDType, float> result;
-		result.reserve(k);
-		for (size_t i = 0; i < indices.size(); ++i) {
-			if (indices[i] == -1) {
-				continue;
-			}
-			result[ids_[indices[i]]] = distances[i];
+		result.reserve(ans_k);
+		for (size_t i = 0; i < ans_k; ++i) {
+			result[indices[i]] = distances[i];
 		}
 		return result;
 	}
 
 	void mergeSegment(Segment&& other) {
-		std::copy_n(other.ids_.begin(), other.ids_.size(),
-					std::back_inserter(ids_));
 		config_.getMerge()(index_, std::move(other.index_));
 	}
 
-	const IDType* getIDs() const { return ids_.data(); }
-
 	const std::unique_ptr<IndexType>& getIndex() const { return index_; }
 
-	size_t size() const { return ids_.size(); }
-
+	size_t size() const { return index_->size(); }
 	size_t getID() const { return seg_id_; }
 
    private:
+	size_t sz_ = 0;
 	IndexConfig<IndexType> config_;
 	std::unique_ptr<IndexType> index_;
-	std::vector<IDType> ids_;
 	size_t seg_id_;
 };
 template <class IDType>
