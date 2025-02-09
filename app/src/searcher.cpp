@@ -15,10 +15,7 @@ grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, co
     
     std::vector<float> data = {42., -42.};
     service::Document doc;
-    
-    doc.mutable_vector_data()->
-    // doc.mutable_vector_data()->Assign(data.begin(), data.end());
-    doc.set_id(0);
+    doc.mutable_vector_data()->Assign(data.begin(), data.end());
 
     auto new_document = response->add_result();
     *new_document = doc;
@@ -27,13 +24,13 @@ grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, co
 }
 
 void SearcherImpl::Init() {
-    etcd_client.AddSearcherHost("[::]:" + port);
-    etcd_client.AddSearcherHostByIndexId("0", "[::]:" + port);
+    etcd_client.AddSearcherHost(host + ":" + port);
+    etcd_client.AddSearcherHostByIndexId("0", host + ":" + port);
 }
 
 void SearcherImpl::GracefulShutdown() {
-    etcd_client.RemoveSearcherHost("[::]:" + port);
-    etcd_client.RemoveSearcherHostByIndexId("0", "[::]:" + port);
+    etcd_client.RemoveSearcherHost(host + ":" + port);
+    etcd_client.RemoveSearcherHostByIndexId("0", host + ":" + port);
 }
 
 

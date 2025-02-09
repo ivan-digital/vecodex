@@ -17,7 +17,9 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     
     UpdateSearchersState();
     for (auto& client: searcher_clients) { 
-        std::cout << "searcher" << " returned:\n" << AskSingleSearcher(client.second, request).DebugString() << std::endl;
+        std::cout << "searcher " + client.first + " returned:\n" 
+            << AskSingleSearcher(client.second, request).DebugString() 
+            << std::endl;
     }
 
     auto new_document = response->add_result();
@@ -25,17 +27,18 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-SearchResponse CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const {
-    return client.getProcessedDocuments(*request);
-}
-
 void CoordinatorImpl::UpdateSearchersState() {
     searcher_clients.clear();
     auto searcher_hosts = etcd_client.ListSearcherHostsByIndexId("0");
     for (const auto& host : searcher_hosts) {
+        std::cout << "updated host " + host + "\n";
         std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
         searcher_clients.emplace(host, SearcherClient(channel));
     }
+}
+
+SearchResponse CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const {
+    return client.getProcessedDocuments(*request);
 }
 
 

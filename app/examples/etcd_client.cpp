@@ -3,7 +3,7 @@
 
 int main(int argc, char* argv[]) {
     // Create an etcd client
-    etcd::Client etcd("http://localhost:2379");
+    etcd::Client etcd("http://[::]:2379");
 
     // Set a key-value pair
     etcd.set("my_key", "my_value");

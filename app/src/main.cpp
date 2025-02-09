@@ -17,6 +17,9 @@ int main(int argc, char* argv[]) {
         .help("...")
         .flag()
         .default_value(false);
+    program.add_argument("--hostname")
+        .help("...")
+        .default_value("localhost");
     program.add_argument("--listening-port")
         .help("...")
         .default_value("44400");
@@ -33,7 +36,7 @@ int main(int argc, char* argv[]) {
         .default_value(std::vector<std::string>());
     program.add_argument("--etcd-addr")
         .help("...")
-        .default_value("http://localhost:2379");
+        .default_value("http://etcd:2379");
 
     try {
         program.parse_args(argc, argv);
@@ -47,9 +50,10 @@ int main(int argc, char* argv[]) {
     const std::string output_port = program.get("--output-port");
     const std::string listening_port = program.get("--listening-port");
     const std::string etcd_addr = program.get("--etcd-addr");
+    const std::string hostname = program.get("--hostname");
 
     if (program_mode == "searcher") {
-        Searcher server = Searcher("localhost", listening_port, etcd_addr);
+        Searcher server = Searcher(hostname, listening_port, etcd_addr);
         server.Run();
         // TODO
     }
@@ -57,7 +61,7 @@ int main(int argc, char* argv[]) {
         // TODO
     }
     if (program_mode == "coordinator") {
-        Coordinator server = Coordinator("localhost", listening_port, etcd_addr);
+        Coordinator server = Coordinator(hostname, listening_port, etcd_addr);
         server.Run();
         // TODO
     }

@@ -4,6 +4,7 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
+    std::cout << "Here1\n";
 
     std::string port;
     if (argc > 1 && argv[1] != nullptr) {
@@ -12,8 +13,10 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Port not found.\nUsage: ./example_client <server-side port>\n");
     }
 
+    std::cout << "Here2\n";
+
     CoordinatorClient client = CoordinatorClient(
-        grpc::CreateChannel("0.0.0.0:" + port, grpc::InsecureChannelCredentials())
+        grpc::CreateChannel("[::]:" + port, grpc::InsecureChannelCredentials())
     );
 
     service::Document doc;

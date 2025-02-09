@@ -12,7 +12,7 @@ void BaseServer::InternalRun(BaseService::Service& service) {
     grpc::ServerBuilder builder;
 
     // std::string fullAddress = host + ":" + port; 
-    std::string fullAddress = "[::]:" + port; 
+    std::string fullAddress = "[::]:" + port; // host + port?
 
     builder.AddListeningPort(fullAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);

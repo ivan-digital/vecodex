@@ -10,16 +10,24 @@ services:
         condition: service_started
       searcher_2:
         condition: service_started
+      etcd:
+        condition: service_started
   searcher_1:
     image: app:latest
     ports:
       - "8002:44400"
-    command: ./build/vecodex-app searcher
+    command: ./build/vecodex-app searcher --hostname searcher_1
+    depends_on:
+      etcd:
+        condition: service_started
   searcher_2:
     image: app:latest
     ports:
       - "8003:44400"
-    command: ./build/vecodex-app searcher
+    command: ./build/vecodex-app searcher --hostname searcher_2
+    depends_on:
+      etcd:
+        condition: service_started
   etcd:
     image: bitnami/etcd:latest
     environment:

@@ -15,7 +15,7 @@ std::vector<std::string> EtcdClient::ListSearcherHostsByIndexId(const std::strin
             throw std::runtime_error("Error while listing keys. etcd response: " + response.error_message());
         }
         for (size_t i = 0; i < response.keys().size(); i++) {
-            hosts.emplace_back(response.values().at(i).key());
+            hosts.emplace_back(response.values()[i].as_string());
         }
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -25,8 +25,8 @@ std::vector<std::string> EtcdClient::ListSearcherHostsByIndexId(const std::strin
 }
 
 etcd::Response EtcdClient::AddSearcherHostByIndexId(const std::string& index_id, const std::string& searcher_id) {
-    std::string key = index_id + "/searchers/" + "/" + searcher_id;
-    std::string value = "1";
+    std::string key = index_id + "/searchers/" + searcher_id;
+    std::string value = searcher_id;
     try {
         auto response = client_.set(key, value).get();
         if (!response.is_ok()) {
@@ -40,7 +40,7 @@ etcd::Response EtcdClient::AddSearcherHostByIndexId(const std::string& index_id,
 }
 
 etcd::Response EtcdClient::RemoveSearcherHostByIndexId(const std::string& index_id, const std::string& searcher_id) {
-    std::string key = index_id + "/searchers/" + "/" + searcher_id;
+    std::string key = index_id + "/searchers/" + searcher_id;
     try {
         auto response = client_.rm(key).get();
         if (!response.is_ok()) {
@@ -55,7 +55,7 @@ etcd::Response EtcdClient::RemoveSearcherHostByIndexId(const std::string& index_
 
 etcd::Response EtcdClient::AddSearcherHost(const std::string& searcher_id) {
     std::string key = "searchers/" + searcher_id;
-    std::string value = "1";
+    std::string value = searcher_id;
     try {
         auto response = client_.set(key, value).get();
         if (!response.is_ok()) {

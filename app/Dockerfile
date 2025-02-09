@@ -1,4 +1,4 @@
-FROM gcc:latest
+FROM gcc:11
 
 WORKDIR /app
 
@@ -16,6 +16,12 @@ COPY ./external/ /app/external
 COPY ./include/ /app/include
 COPY ./src/ /app/src
 
+RUN cd /app/external/grpc/ && \
+    mkdir -p cmake/build && \
+    cd cmake/build && \
+    cmake ../.. -DCMAKE_CXX_STANDARD=17 -DgRPC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/ && \
+    make -j8 && \
+    make -j8 install
 RUN ./build.sh
 
 CMD ./build/vecodex-app coordinator

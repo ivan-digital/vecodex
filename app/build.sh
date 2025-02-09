@@ -1,8 +1,7 @@
 rm -rf generated
 mkdir -p build
 cd build
-cmake -DgRPC_INSTALL=ON \
-      -DBUILD_SHARED_LIBS=yes \
+cmake -DBUILD_SHARED_LIBS=yes \
       -DgRPC_BUILD_TESTS=OFF \
       -DgRPC_PROTOBUF_PROVIDER=module \
       -DgRPC_ABSL_PROVIDER=module \
@@ -14,5 +13,5 @@ cmake -DgRPC_INSTALL=ON \
       -DRE2_BUILD_TESTING=OFF \
       ..
 make -j8 vecodex-app
-# make -j8 example_client
-# make -j8 etcd_client
+make -j8 example_client
+make -j8 etcd_client
