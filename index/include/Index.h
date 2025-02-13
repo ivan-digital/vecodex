@@ -1,12 +1,13 @@
 #pragma once
 
+#include <deque>
 #include <iostream>
 #include <set>
 #include <vector>
 #include "Segment.h"
 #include "SegmentFactory.h"
 namespace vecodex {
-template <class IndexType, typename... ArgTypes>
+template <class IndexType, class IDType, typename... ArgTypes>
 class Index {
    public:
 	Index(int dim, int segmentThreshold, IndexConfig<IndexType> config,
@@ -36,7 +37,7 @@ class Index {
 	}
 
 	std::vector<IDType> search(const std::vector<float>& query, int k) {
-		std::set<SearchResult> kth_stat;
+		std::set<SearchResult<IDType>> kth_stat;
 		for (const auto& segment : segments_) {
 			auto segmentResults = segment.search(query, k);
 			for (const auto& p : segmentResults) {
@@ -54,24 +55,31 @@ class Index {
 		return results;
 	}
 
-	void updateVector(const IDType& id, const std::vector<float>& vector);
-	void mergeSegments() {
-		if (segments_.size() == 1) {
-			return;
+	void erase(size_t n, const IDType* ids) {
+		for (size_t i = 0; i < segments_.size(); ++i) {
+			segments_[i].deleteBatch(n, ids);
 		}
-		vecodex::Segment mergedSegment(factory_.create(config_));
-		for (auto&& segment : segments_) {
-			mergedSegment.mergeSegment(std::move(segment));
-		}
-		segments_.clear();
-		segments_.push_back(std::move(mergedSegment));
 	}
+
+	std::vector<size_t> mergeSegments() {
+		if (segments_.size() == 1) {
+			return {};
+		}
+		std::vector<size_t> erased_segments_;
+		while (segments_.size() > 1) {
+			erased_segments_.push_back(segments_.front().getID());
+			segments_.back().mergeSegment(std::move(segments_.front()));
+			segments_.pop_front();
+		}
+		return erased_segments_;
+	}
+	size_t size() const { return segments_.size(); }
 
    private:
 	int d_;
 	size_t segmentThreshold_;
 	IndexConfig<IndexType> config_;
-	SegmentFactory<IndexType, ArgTypes...> factory_;
-	std::vector<Segment<IndexType>> segments_;
+	SegmentFactory<IndexType, IDType, ArgTypes...> factory_;
+	std::deque<Segment<IndexType, IDType>> segments_;
 };
 }  // namespace vecodex

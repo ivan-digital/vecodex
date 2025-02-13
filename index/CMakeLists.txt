@@ -95,15 +95,9 @@ if (NOT TARGET gtest)
 endif()
 
 # Main Library Target
-add_library(vecodex-index
-    src/Segment.cpp
-    include/Index.h
-    include/Segment.h
-    include/SegmentFactory.h
-    include/IndexConfig.h
-)
+add_library(vecodex-index INTERFACE)
 
-target_include_directories(vecodex-index PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(vecodex-index INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp baselines/faiss.cpp)
@@ -111,7 +105,6 @@ add_test(NAME test_index_basic COMMAND VecodexIndexTest)
 
 target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 # Link Libraries to Main Library Target
-target_link_libraries(vecodex-index PRIVATE jsoncpp_lib faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES})
 
 # Link Libraries to Test Executable
 target_link_libraries(VecodexIndexTest PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
@@ -119,29 +112,23 @@ target_link_libraries(VecodexIndexTest PRIVATE jsoncpp_lib faiss gtest gtest_mai
 # Additional macOS-specific settings
 if(APPLE)
     # Example: Link frameworks if needed
-    target_link_libraries(vecodex-index PRIVATE "-framework Accelerate")
     target_link_libraries(VecodexIndexTest PRIVATE "-framework Accelerate")
 
     # Set macOS specific compile options
-    target_compile_options(vecodex-index PRIVATE -Wall -Wextra)
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra)
 
     # Set rpath for dynamic libraries if necessary
-    set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "@loader_path/lib")
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "@loader_path/lib")
 endif()
 
 # Additional Linux-specific settings
 if(UNIX AND NOT APPLE)
     # Example: Link pthread explicitly if needed
-    target_link_libraries(vecodex-index PRIVATE pthread)
     target_link_libraries(VecodexIndexTest PRIVATE pthread)
 
     # Set Linux specific compile options
-    target_compile_options(vecodex-index PRIVATE -Wall -Wextra -fPIC)
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
 
     # Set rpath for dynamic libraries if necessary
-    set_target_properties(vecodex-index PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()

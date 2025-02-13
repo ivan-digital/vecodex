@@ -3,14 +3,14 @@
 #include "Segment.h"
 #include "faiss/MetricType.h"
 namespace vecodex {
-template <class IndexType, typename... ArgTypes>
+template <class IndexType, class IDType, typename... ArgTypes>
 class SegmentFactory {
    public:
 	SegmentFactory(std::tuple<ArgTypes...>&& args) : args_(std::move(args)) {}
-	Segment<IndexType> create(IndexConfig<IndexType> config) const {
+	Segment<IndexType, IDType> create(IndexConfig<IndexType> config) const {
 		std::unique_ptr<IndexType> ptr =
 			std::apply(create_ptr<IndexType>, args_);
-		return vecodex::Segment<IndexType>(config, std::move(ptr));
+		return vecodex::Segment<IndexType, IDType>(config, std::move(ptr));
 	}
 
    private:
