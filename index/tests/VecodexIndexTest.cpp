@@ -7,27 +7,12 @@
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
-using ConfigHNSWType = vecodex::IndexConfig<
-	baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
 using IndexHNSWType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
 				   std::string, int, int, faiss::MetricType>;
-using ConfigFlatType =
-	vecodex::IndexConfig<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
 using IndexFlatType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
 				   std::string, int, faiss::MetricType>;
-
-ConfigHNSWType config_hnsw(
-	baseline::IndexAdd<faiss::IndexHNSWFlat, std::string>,
-	baseline::IndexSearch<faiss::IndexHNSWFlat, std::string>,
-	baseline::IndexMerge<faiss::IndexHNSWFlat, std::string>,
-	baseline::IndexDelete<faiss::IndexHNSWFlat, std::string>);
-ConfigFlatType config_flat(
-	baseline::IndexAdd<faiss::IndexFlat, std::string>,
-	baseline::IndexSearch<faiss::IndexFlat, std::string>,
-	baseline::IndexMerge<faiss::IndexFlat, std::string>,
-	baseline::IndexDelete<faiss::IndexFlat, std::string>);
 
 template <class IDType>
 bool check_meta(const std::vector<IDType>& out_meta,
@@ -50,8 +35,7 @@ bool check_meta(const std::vector<IDType>& out_meta,
 TEST(VecodexIndexTest, AddAndSearchVector) {
 
 	// Initialize index with 2 dimensions and segment threshold of 5
-	IndexHNSWType index(2, 3, config_hnsw,
-						{2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 3, {2, 2, faiss::MetricType::METRIC_L2});
 
 	// Add some vectors
 	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
@@ -66,7 +50,7 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
 }
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Initialize index with 2 dimensions and segment threshold of 3
-	IndexFlatType index(2, 3, config_flat, {2, faiss::MetricType::METRIC_L2});
+	IndexFlatType index(2, 3, {2, faiss::MetricType::METRIC_L2});
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -83,14 +67,15 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 
 TEST(VecodexIndexTest, MergeSegments) {
 	// Initialize index with 2 dimensions and segment threshold of 2
-	IndexFlatType index(2, 2, config_flat, {2, faiss::MetricType::METRIC_L2});
+	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2});
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3"};
 	// Add vectors to create multiple segments
-	index.add(3, ids.data(), (float*)vectors);
+	index.add(5, ids.data(), (float*)vectors);
 	// Merge segments
-	EXPECT_TRUE(index.mergeSegments().size() == 1);
+	EXPECT_TRUE(index.mergeSegments(index.size()).size() == 3);
+	EXPECT_TRUE(index.size() == 1);
 
 	// Verify that search still works correctly after merging
 	std::vector<float> query = {2.5f, 2.5f};
@@ -100,8 +85,7 @@ TEST(VecodexIndexTest, MergeSegments) {
 }
 
 TEST(VecodexIndexTest, Search) {
-	IndexHNSWType index(2, 2, config_hnsw,
-						{2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 2, {2, 2, faiss::MetricType::METRIC_L2});
 
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
@@ -115,8 +99,7 @@ TEST(VecodexIndexTest, Search) {
 }
 
 TEST(VecodexIndexTest, Delete) {
-	IndexHNSWType index(2, 2, config_hnsw,
-						{2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 2, {2, 2, faiss::MetricType::METRIC_L2});
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
 	vectors[2] = vectors[3] = 2.0f;
@@ -137,10 +120,10 @@ TEST(VecodexIndexTest, Delete) {
 TEST(VecodexIndexTest, Basic) {
 	const size_t dim = 100;
 	const size_t threshold = 1000;
-	IndexHNSWType index_hnsw(dim, threshold, config_hnsw,
+	IndexHNSWType index_hnsw(dim, threshold,
 							 {dim, 2, faiss::MetricType::METRIC_L2});
 
-	IndexFlatType index_flat(dim, threshold, config_flat,
+	IndexFlatType index_flat(dim, threshold,
 							 {dim, faiss::MetricType::METRIC_L2});
 	const size_t vec_num = 3;
 	const float max_num = 10;
