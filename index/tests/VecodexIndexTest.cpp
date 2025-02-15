@@ -70,7 +70,7 @@ TEST(VecodexIndexTest, MergeSegments) {
 	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2});
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
-	std::vector<std::string> ids = {"vec1", "vec2", "vec3"};
+	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
 	// Add vectors to create multiple segments
 	index.add(5, ids.data(), (float*)vectors);
 	// Merge segments
