@@ -1,19 +1,17 @@
-#include "coordinator.h"
+#include "CoordinatorClient.h"
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    std::cout << "Here1\n";
 
     std::string port;
+
     if (argc > 1 && argv[1] != nullptr) {
         port = std::string(argv[1]);
     } else {
         throw std::runtime_error("Port not found.\nUsage: ./example_client <server-side port>\n");
     }
-
-    std::cout << "Here2\n";
 
     CoordinatorClient client = CoordinatorClient(
         grpc::CreateChannel("[::]:" + port, grpc::InsecureChannelCredentials())

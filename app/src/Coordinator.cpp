@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 
-#include "coordinator.h"
-#include "searcher.h"
+#include "Coordinator.h"
+#include "SearcherClient.h"
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 
@@ -31,7 +31,7 @@ void CoordinatorImpl::UpdateSearchersState() {
     searcher_clients.clear();
     auto searcher_hosts = etcd_client.ListSearcherHostsByIndexId("0");
     for (const auto& host : searcher_hosts) {
-        std::cout << "updated host " + host + "\n";
+        std::cout << "Updated host " + host + "\n";
         std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
         searcher_clients.emplace(host, SearcherClient(channel));
     }
@@ -42,8 +42,9 @@ SearchResponse CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, 
 }
 
 
-Coordinator::Coordinator(const std::string& host, const std::string& port, const std::string& etcd_addr) 
-    : BaseServer(host, port, etcd_addr), service(CoordinatorImpl(etcd_addr)) {}
+Coordinator::Coordinator(const json& config)
+    : BaseServer(config), 
+    service(CoordinatorImpl(config["etcd_address"].template get_ref<const std::string&>())) {}
 
 void Coordinator::Run() {
     InternalRun(service); 

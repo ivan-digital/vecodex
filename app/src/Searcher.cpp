@@ -1,4 +1,4 @@
-#include "searcher.h"
+#include "Searcher.h"
 #include <iostream>
 
 SearcherImpl::SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr) 
@@ -34,8 +34,9 @@ void SearcherImpl::GracefulShutdown() {
 }
 
 
-Searcher::Searcher(const std::string& host, const std::string& port, const std::string& etcd_addr) 
-    : BaseServer(host, port, etcd_addr), service(SearcherImpl(host, port, etcd_addr)) {}
+Searcher::Searcher(const json& config) 
+    : BaseServer(config), 
+    service(SearcherImpl(host, port, config["etcd_address"].template get_ref<const std::string&>())) {}
 
 void Searcher::Run() {
     InternalRun(service);

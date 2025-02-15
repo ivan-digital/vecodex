@@ -15,6 +15,7 @@ COPY ./proto/ /app/proto
 COPY ./external/ /app/external
 COPY ./include/ /app/include
 COPY ./src/ /app/src
+COPY ./configs/ /app/configs 
 
 RUN cd /app/external/grpc/ && \
     mkdir -p cmake/build && \

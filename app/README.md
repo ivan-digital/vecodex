@@ -3,3 +3,19 @@
 `./build/vecodex-app coordinator --listening-port 44400` for running coordinator server
 
 `./build/example_client 44400` for sending request to coordinator
+
+---
+
+**To build container for dev use:**
+
+`docker build -f Dockerfile_dev -t app-dev:latest`
+
+**To run dev container use:**
+
+`docker run -it --name docker-dev -v ./:/app app-dev:latest`
+
+**To run Coordinator example client use:**
+
+- `docker run -it --name docker-dev --network host -v ./:/app app-dev:latest`
+- Inside container run `make example_client && ./example_client <port>`
+- To be able to exit and enter the container's terminal use `...`

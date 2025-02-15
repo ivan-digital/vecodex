@@ -1,6 +1,5 @@
-rm -rf generated
-mkdir -p build
-cd build
+mkdir -p cmake/build
+cd cmake/build
 cmake -DBUILD_SHARED_LIBS=yes \
       -DgRPC_BUILD_TESTS=OFF \
       -DgRPC_PROTOBUF_PROVIDER=module \
@@ -11,7 +10,7 @@ cmake -DBUILD_SHARED_LIBS=yes \
       -DgRPC_ZLIB_PROVIDER=module \
       -DCMAKE_INSTALL_PREFIX=/app \
       -DRE2_BUILD_TESTING=OFF \
-      ..
+      ../..
 make -j8 vecodex-app
-make -j8 example_client
+# make -j8 example_client
 make -j8 etcd_client

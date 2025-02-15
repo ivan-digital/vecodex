@@ -1,4 +1,4 @@
-#include "etcd_client.h"
+#include "EtcdClient.h"
 #include <vector>
 
 EtcdClient::EtcdClient(const string& etcd_addr)

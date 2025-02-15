@@ -1,0 +1,6 @@
+{
+    "mode": "searcher",
+    "port": "44400",
+    "hostname": "searcher_2",
+    "etcd_address": "http://etcd:2379"
+}

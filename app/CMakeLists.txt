@@ -41,6 +41,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
+# Json
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 # gRPC
 option(protobuf_MODULE_COMPATIBLE TRUE)
 find_package(Protobuf CONFIG REQUIRED)
@@ -111,13 +115,21 @@ add_subdirectory(external/etcd-cpp-apiv3)
 file(GLOB SRC_LIST src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
-target_link_libraries(${PROJECT_NAME} argparse ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects etcd-cpp-api)
+target_link_libraries(${PROJECT_NAME} 
+  argparse 
+  ${_PROTOBUF_LIBPROTOBUF} 
+  ${_REFLECTION} 
+  ${_GRPC_GRPCPP} 
+  proto-objects 
+  etcd-cpp-api 
+  nlohmann_json::nlohmann_json
+) 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR} ${PROJECT_SOURCE_DIR}/external/etcd-cpp-apiv3)
 
 # Example client
-add_executable(example_client ${PROJECT_SOURCE_DIR}/examples/run_client.cpp ${PROJECT_SOURCE_DIR}/src/etcd_client.cpp ${PROJECT_SOURCE_DIR}/src/coordinator.cpp ${PROJECT_SOURCE_DIR}/src/base.cpp)
-target_link_libraries(example_client PRIVATE ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects etcd-cpp-api)
-target_include_directories(example_client PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR} ${PROJECT_SOURCE_DIR}/external/etcd-cpp-apiv3)
+add_executable(example_client ${PROJECT_SOURCE_DIR}/examples/run_client.cpp ${PROJECT_SOURCE_DIR}/src/BaseClient.cpp)
+target_link_libraries(example_client PRIVATE ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
+target_include_directories(example_client PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})
 
 # Etcd client
 add_executable(etcd_client ${PROJECT_SOURCE_DIR}/examples/etcd_client.cpp)
