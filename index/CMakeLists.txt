@@ -127,7 +127,7 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(VecodexIndexTest PRIVATE pthread)
 
     # Set Linux specific compile options
-    target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
+    target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC -fsanitize=address)
 
     # Set rpath for dynamic libraries if necessary
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
