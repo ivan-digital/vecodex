@@ -100,7 +100,7 @@ add_library(vecodex-index INTERFACE)
 target_include_directories(vecodex-index INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 # Test Executable
-add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp baselines/faiss.cpp)
+add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 add_test(NAME test_index_basic COMMAND VecodexIndexTest)
 
 target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baselines)

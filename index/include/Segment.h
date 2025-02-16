@@ -1,6 +1,5 @@
 #pragma once
 
-#include <IndexConfig.h>
 #include <iostream>
 #include <memory>
 #include <random>
@@ -9,44 +8,35 @@
 #include <vector>
 namespace vecodex {
 template <class IndexType, class IDType>
-class Segment {
+class Segment : public IndexType {
    public:
-	Segment(const IndexConfig<IndexType>& config,
-			std::unique_ptr<IndexType>&& index)
-		: config_(config), index_(std::move(index)) {
+	template <typename... Args>
+	Segment(Args... args) : IndexType(args...) {}
+
+	Segment(IndexType&& index) : IndexType(std::move(index)) {
 		seg_id_ = rand();
 	}
-
-	Segment(size_t id, const IndexConfig<IndexType>& config,
-			std::unique_ptr<IndexType>&& index)
-		: config_(config), index_(std::move(index)), seg_id_(id) {}
 
 	Segment(const Segment&) = delete;
 
 	Segment& operator=(const Segment&) = delete;
 
-	Segment(Segment&& other)
-		: config_(std::move(other.config_)),
-		  index_(std::move(other.index_)),
-		  seg_id_(std::move(other.seg_id_)) {}
+	Segment(Segment&& other) = default;
 
 	void addVectorBatch(size_t n, const IDType* ids, const float* vectors) {
-		config_.getAdd()(index_, n, vectors, ids);
+		IndexType::add_batch(n, vectors, ids);
 	}
 
 	void deleteBatch(size_t n, const IDType* ids) {
-		if (!config_.hasDelete()) {
-			throw std::runtime_error("No delete function for Index Segment");
-		}
-		config_.getDelete().value()(index_, n, ids);
+		IndexType::erase_batch(n, ids);
 	}
 	// Mark search as const
-	std::unordered_map<IDType, float> search(const std::vector<float>& query,
-											 int k) const {
+	std::unordered_map<IDType, float> search_query(
+		const std::vector<float>& query, int k) const {
 		std::vector<IDType> indices(k);
 		std::vector<float> distances(k);
-		size_t ans_k = config_.getSearch()(index_, k, query.data(),
-										   distances.data(), indices.data());
+		size_t ans_k = IndexType::single_search(
+			k, query.data(), distances.data(), indices.data());
 		std::unordered_map<IDType, float> result;
 		result.reserve(ans_k);
 		for (size_t i = 0; i < ans_k; ++i) {
@@ -55,19 +45,19 @@ class Segment {
 		return result;
 	}
 
-	void mergeSegment(Segment&& other) {
-		config_.getMerge()(index_, std::move(other.index_));
+	void mergeSegment(Segment& other) {
+		IndexType::merge_from_other(std::move(other.getIndex()));
+	}
+	IndexType& getIndex() { return *static_cast<IndexType*>(this); }
+	const IndexType& getIndex() const {
+		return *static_cast<const IndexType*>(this);
 	}
 
-	const std::unique_ptr<IndexType>& getIndex() const { return index_; }
-
-	size_t size() const { return index_->size(); }
+	size_t size() const { return IndexType::size(); }
 	size_t getID() const { return seg_id_; }
 
    private:
 	size_t sz_ = 0;
-	IndexConfig<IndexType> config_;
-	std::unique_ptr<IndexType> index_;
 	size_t seg_id_;
 };
 template <class IDType>

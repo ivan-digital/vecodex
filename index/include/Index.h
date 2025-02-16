@@ -10,13 +10,11 @@ namespace vecodex {
 template <class IndexType, class IDType, typename... ArgTypes>
 class Index {
    public:
-	Index(int dim, int segmentThreshold, IndexConfig<IndexType> config,
-		  std::tuple<ArgTypes...> args)
+	Index(int dim, int segmentThreshold, std::tuple<ArgTypes...> args)
 		: d_(dim),
 		  segmentThreshold_(segmentThreshold),
-		  config_(config),
 		  factory_(std::move(args)) {
-		segments_.push_back(factory_.create(config_));
+		factory_.push_segment(segments_);
 	}
 
 	void add(size_t n, const IDType* ids, const float* vectors) {
@@ -31,15 +29,15 @@ class Index {
 			vectors += (batch * d_);
 			n -= batch;
 			if (segments_.back().size() == segmentThreshold_) {
-				segments_.push_back(factory_.create(config_));
+				factory_.push_segment(segments_);
 			}
 		}
 	}
 
-	std::vector<IDType> search(const std::vector<float>& query, int k) {
+	std::vector<IDType> search(const std::vector<float>& query, int k) const {
 		std::set<SearchResult<IDType>> kth_stat;
 		for (const auto& segment : segments_) {
-			auto segmentResults = segment.search(query, k);
+			auto segmentResults = segment.search_query(query, k);
 			for (const auto& p : segmentResults) {
 				kth_stat.emplace(p.first, p.second);
 				if (kth_stat.size() > k) {
@@ -61,14 +59,15 @@ class Index {
 		}
 	}
 
-	std::vector<size_t> mergeSegments() {
-		if (segments_.size() == 1) {
-			return {};
+	std::vector<size_t> mergeSegments(size_t amount) {
+		if (amount > segments_.size()) {
+			amount = segments_.size();
 		}
 		std::vector<size_t> erased_segments_;
-		while (segments_.size() > 1) {
+		factory_.push_segment(segments_);
+		for (size_t i = 0; i < amount; ++i) {
 			erased_segments_.push_back(segments_.front().getID());
-			segments_.back().mergeSegment(std::move(segments_.front()));
+			segments_.back().mergeSegment(segments_.front());
 			segments_.pop_front();
 		}
 		return erased_segments_;
@@ -78,7 +77,6 @@ class Index {
    private:
 	int d_;
 	size_t segmentThreshold_;
-	IndexConfig<IndexType> config_;
 	SegmentFactory<IndexType, IDType, ArgTypes...> factory_;
 	std::deque<Segment<IndexType, IDType>> segments_;
 };

@@ -1,6 +1,5 @@
 #include <map>
 #include <numeric>
-#include "IndexConfig.h"
 #include "SegmentFactory.h"
 #include "faiss/IndexFlat.h"
 #include "faiss/IndexHNSW.h"
@@ -21,7 +20,8 @@ class FaissIndex : public BaseIndex {
 		}
 	}
 
-	size_t single_search(size_t k, const float* q, float* dist, IDType* ids) {
+	size_t single_search(size_t k, const float* q, float* dist,
+						 IDType* ids) const {
 		std::vector<float> res_dist(k + erased_.size());
 		std::vector<faiss::idx_t> res(k + erased_.size());
 		BaseIndex::search(1, q, res.size(), res_dist.data(), res.data());
@@ -40,19 +40,19 @@ class FaissIndex : public BaseIndex {
 		}
 		size_t i = 0;
 		for (const auto& [key, value] : sorted_res) {
-			ids[i] = inv_ids_[value];
+			ids[i] = inv_ids_.at(value);
 			dist[i] = key;
 			i++;
 		}
 		return i;
 	}
 
-	void merge_from_other(FaissIndex& other) {
+	void merge_from_other(FaissIndex&& other) {
 		std::vector<faiss::idx_t> idxs;
 		std::vector<IDType> ids;
 		idxs.reserve(other.inv_ids_.size());
-		for (const auto& [key, value] : inv_ids_) {
-			if (erased_.count(key)) {
+		for (const auto& [key, value] : other.inv_ids_) {
+			if (other.erased_.count(key)) {
 				continue;
 			}
 			ids.push_back(value);
@@ -84,29 +84,5 @@ class FaissIndex : public BaseIndex {
 	std::unordered_map<IDType, faiss::idx_t> ids_;
 	std::unordered_map<faiss::idx_t, IDType> inv_ids_;
 };
-
-template <typename faissIndex, typename IDType>
-void IndexAdd(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
-			  size_t n, const float* vectors, const IDType* ids) {
-	index->add_batch(n, vectors, ids);
-}
-
-template <typename faissIndex, typename IDType>
-size_t IndexSearch(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
-				   size_t k, const float* q, float* dist, IDType* ids) {
-	return index->single_search(k, q, dist, ids);
-}
-
-template <typename faissIndex, typename IDType>
-void IndexMerge(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
-				std::unique_ptr<FaissIndex<faissIndex, IDType>>&& other) {
-	index->merge_from_other(*other);
-}
-
-template <typename faissIndex, typename IDType>
-void IndexDelete(const std::unique_ptr<FaissIndex<faissIndex, IDType>>& index,
-				 size_t n, const IDType* ids) {
-	index->erase_batch(n, ids);
-}
 
 }  // namespace baseline
