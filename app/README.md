@@ -6,7 +6,7 @@
 
 ---
 
-**To build container for dev use:**
+**To build dev container use:**
 
 `docker build -f Dockerfile_dev -t app-dev:latest`
 
@@ -18,4 +18,3 @@
 
 - `docker run -it --name docker-dev --network host -v ./:/app app-dev:latest`
 - Inside container run `make example_client && ./example_client <port>`
-- To be able to exit and enter the container's terminal use `...`
