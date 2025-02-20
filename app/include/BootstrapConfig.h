@@ -11,7 +11,7 @@ public:
     BootstrapConfig(int argc, char* argv[]) {
         program_.add_argument("--config-path")
             .default_value("");
-        program_.add_argument("mode")
+        program_.add_argument("--mode")
             .help("...")
             .choices("searcher", "writer", "coordinator", "")
             .default_value("");
@@ -63,13 +63,12 @@ private:
 
         result_ = ReadJsonConfig_(config_path);
 
-        result_["mode"] = mode == "" ? result_["mode"];
-        result_["hostname"] = hostname == "" ? result_["hostname"] : hostname;
-        result_["port"] = port == "" ? result_["port"];
-        result_["etcd_address"] = etcd_addr == "" ? result_["etcd_address"] : etcd_addr;
-        result_["indexes"] = indexes == "" ? result_["indexes"] ? nlohmann::
+        result_["mode"] = mode == "" ? result_["mode"].template get<std::string>() : mode;
+        result_["hostname"] = hostname == "" ? result_["hostname"].template get<std::string>() : hostname;
+        result_["port"] = listening_port == "" ? result_["port"].template get<std::string>() : listening_port;
+        result_["etcd_address"] = etcd_addr == "" ? result_["etcd_address"].template get<std::string>() : etcd_addr;
+        result_["indexes"] = indexes == "" ? result_["indexes"] : json::parse(indexes);
 
-        // TODO: merge with argparsed arguments;
         std::cout << "CONFIG:\n" << result_ << "\n";
     }
 
@@ -87,10 +86,6 @@ private:
             throw e;
         }
         return data;
-    }
-
-    void Validate_() {
-
     }
 
     argparse::ArgumentParser program_{"vecodex-app"};

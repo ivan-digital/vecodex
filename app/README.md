@@ -12,7 +12,7 @@
 
 **To run dev container use:**
 
-`docker run -it --name docker-dev -v ./:/app app-dev:latest`
+`docker run -it --name docker-dev --network host -v ./:/app app-dev:latest`
 
 **To run Coordinator example client use:**
 
