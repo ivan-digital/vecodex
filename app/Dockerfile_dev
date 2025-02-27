@@ -1,0 +1,12 @@
+FROM gcc:11
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y cmake \
+    libssl-dev \ 
+    libcpprest-dev \
+    libc++-dev
+RUN apt-get install -y libboost-dev
+
+CMD ./build-dev.sh

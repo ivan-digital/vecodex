@@ -4,12 +4,13 @@ package service;
 
 message Document {
     repeated float vector_data = 1;
-    int32 id = 2;
+    optional int32 id = 2;
     // what else should be here ?
 }
 
 message SearchRequest {
     optional Document data = 1;
+    optional int32 index_id = 2;
     // what else should be here ?
 }
 

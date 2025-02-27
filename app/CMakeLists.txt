@@ -17,7 +17,12 @@ include_directories(
 )
 
 # Common configurations
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # TBD
+include(CheckCXXCompilerFlag)
+message(STATUS "Enabling AddressSanitizer")
+add_compile_options(-fsanitize=address)
+add_link_options(-fsanitize=address)
 
 # Threading
 find_package(Threads REQUIRED)
@@ -27,7 +32,6 @@ find_package(Threads REQUIRED)
 if (NOT TARGET gtest)
     # add_subdirectory(external/googletest)
 endif()
-
 
 # ArgParse library
 include(FetchContent)
@@ -47,26 +51,35 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(aws-cpp-sdk)
 
-# gRPC
-set(ABSL_ENABLE_INSTALL ON)
-add_subdirectory(external/grpc EXCLUDE_FROM_ALL)
-message(STATUS "Using gRPC via add_subdirectory.")
+# Json
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
-set(_PROTOBUF_LIBPROTOBUF libprotobuf)
-set(_REFLECTION grpc++_reflection)
-set(_ORCA_SERVICE grpcpp_orca_service)
+# gRPC
+option(protobuf_MODULE_COMPATIBLE TRUE)
+find_package(Protobuf CONFIG REQUIRED)
+message(STATUS "Using protobuf ${Protobuf_VERSION}")
+
+set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
+set(_REFLECTION gRPC::grpc++_reflection)
 if(CMAKE_CROSSCOMPILING)
   find_program(_PROTOBUF_PROTOC protoc)
 else()
   set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
 endif()
-set(_GRPC_GRPCPP grpc++)
+
+# Find gRPC installation
+# Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+find_package(gRPC CONFIG REQUIRED)
+message(STATUS "Using gRPC ${gRPC_VERSION}")
+
+set(_GRPC_GRPCPP gRPC::grpc++)
 if(CMAKE_CROSSCOMPILING)
   find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
 else()
-  set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
+  set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
-
+# Build proto files
 set(PROTO_BINARY_DIR "${PROJECT_SOURCE_DIR}/generated")
 set(PROTO_SOURCE_DIR "${PROJECT_SOURCE_DIR}/proto")
 file(GLOB PROTO_FILES ${PROJECT_SOURCE_DIR}/proto/*.proto)
@@ -104,16 +117,34 @@ add_library(proto-objects ${SRCS} ${HDRS})
 target_link_libraries(proto-objects "${_GRPC_GRPCPP}" "${_PROTOBUF_LIBPROTOBUF}" "${_REFLECTION}")
 target_include_directories(proto-objects PUBLIC "$<BUILD_INTERFACE:${PROTO_BINARY_DIR}>")
 
+# etcd-cpp-api
+# needs libboost-all-dev libssl-dev cpprestsdk; see https://github.com/etcd-cpp-apiv3/etcd-cpp-apiv3/tree/master
+add_subdirectory(external/etcd-cpp-apiv3)
 
 # Main executable
 file(GLOB SRC_LIST src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
-target_link_libraries(${PROJECT_NAME} argparse ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects aws-cpp-sdk-core aws-cpp-sdk-s3)
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})
 
+target_link_libraries(${PROJECT_NAME} 
+  argparse 
+  ${_PROTOBUF_LIBPROTOBUF} 
+  ${_REFLECTION} 
+  ${_GRPC_GRPCPP} 
+  proto-objects 
+  etcd-cpp-api 
+  nlohmann_json::nlohmann_json
+  aws-cpp-sdk-core
+  aws-cpp-sdk-s3
+) 
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR} ${PROJECT_SOURCE_DIR}/external/etcd-cpp-apiv3)
 
 # Example client
-add_executable(example_client ${PROJECT_SOURCE_DIR}/examples/run_client.cpp ${PROJECT_SOURCE_DIR}/src/coordinator.cpp ${PROJECT_SOURCE_DIR}/src/base.cpp)
-target_link_libraries(example_client argparse ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
+add_executable(example_client ${PROJECT_SOURCE_DIR}/examples/run_client.cpp ${PROJECT_SOURCE_DIR}/src/BaseClient.cpp)
+target_link_libraries(example_client PRIVATE ${_PROTOBUF_LIBPROTOBUF} ${_REFLECTION} ${_GRPC_GRPCPP} proto-objects)
 target_include_directories(example_client PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR})
+
+# Etcd client
+add_executable(etcd_client ${PROJECT_SOURCE_DIR}/examples/etcd_client.cpp)
+target_link_libraries(etcd_client PRIVATE etcd-cpp-api)
+target_include_directories(etcd_client PRIVATE ${PROJECT_SOURCE_DIR}/external/etcd-cpp-apiv3)

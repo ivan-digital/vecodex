@@ -1,15 +1,23 @@
+#pragma once
+
 #include <service.grpc.pb.h>
 #include <string>
+#include "EtcdClient.h"
+#include <nlohmann/json.hpp>
 
 using service::BaseService;
+using service::SearchResponse;
+using service::SearchRequest;
+using json = nlohmann::json;
+
 
 class BaseServer {
 public:
-    BaseServer(const std::string& host, const std::string& port);
+    BaseServer(const json& config);
 
     ~BaseServer() {}
 
-    void Run();
+    virtual void Run() = 0;
 protected:
     std::string host;
     std::string port;

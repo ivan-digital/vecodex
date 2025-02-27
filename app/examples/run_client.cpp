@@ -1,4 +1,4 @@
-#include "coordinator.h"
+#include "CoordinatorClient.h"
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <iostream>
@@ -6,6 +6,7 @@
 int main(int argc, char* argv[]) {
 
     std::string port;
+
     if (argc > 1 && argv[1] != nullptr) {
         port = std::string(argv[1]);
     } else {
@@ -13,7 +14,7 @@ int main(int argc, char* argv[]) {
     }
 
     CoordinatorClient client = CoordinatorClient(
-        grpc::CreateChannel("127.0.0.1:" + port, grpc::InsecureChannelCredentials())
+        grpc::CreateChannel("[::]:" + port, grpc::InsecureChannelCredentials())
     );
 
     service::Document doc;
@@ -23,5 +24,5 @@ int main(int argc, char* argv[]) {
     *req.mutable_data() = doc;
 
     auto resp = client.getProcessedDocuments(req);
-    std::cout << resp.result(0).id() << std::endl;
+    std::cout << resp.DebugString() << std::endl;
 }
