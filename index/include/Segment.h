@@ -17,9 +17,9 @@ class Segment : public IndexType {
 		seg_id_ = rand();
 	}
 
-	Segment(const Segment&) = delete;
+	Segment(const Segment&) = default;
 
-	Segment& operator=(const Segment&) = delete;
+	Segment& operator=(const Segment&) = default;
 
 	Segment(Segment&& other) = default;
 

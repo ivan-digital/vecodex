@@ -7,9 +7,9 @@ class SegmentFactory {
    public:
 	SegmentFactory(std::tuple<ArgTypes...>&& args) : args_(std::move(args)) {}
 	inline void push_segment(
-		std::deque<Segment<IndexType, IDType>>& data) const {
+		std::deque<std::shared_ptr<Segment<IndexType, IDType>>>& data) const {
 		auto create = [&](ArgTypes... args) {
-			data.emplace_back(args...);
+			data.push_back(std::make_shared<Segment<IndexType, IDType>>(args...));
 		};
 		std::apply(create, args_);
 	}
