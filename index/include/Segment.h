@@ -45,8 +45,8 @@ class Segment : public IndexType {
 		return result;
 	}
 
-	void mergeSegment(Segment& other) {
-		IndexType::merge_from_other(std::move(other.getIndex()));
+	void mergeSegment(const std::shared_ptr<Segment>& other) {
+		IndexType::merge_from_other(std::move(other->getIndex()));
 	}
 	IndexType& getIndex() { return *static_cast<IndexType*>(this); }
 	const IndexType& getIndex() const {
@@ -57,7 +57,6 @@ class Segment : public IndexType {
 	size_t getID() const { return seg_id_; }
 
    private:
-	size_t sz_ = 0;
 	size_t seg_id_;
 };
 template <class IDType>

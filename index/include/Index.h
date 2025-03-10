@@ -2,18 +2,18 @@
 
 #include <deque>
 #include <iostream>
+#include <memory>
 #include <set>
 #include <vector>
-#include <memory>
 #include "Segment.h"
 #include "SegmentFactory.h"
 namespace vecodex {
 template <class IndexType, class IDType, typename... ArgTypes>
 class Index {
    public:
-	using UpdateCallback =
-		std::function<void(std::vector<size_t>&&,
-						   std::vector<std::shared_ptr<const Segment<IndexType, IDType>>>&&)>;
+	using UpdateCallback = std::function<void(
+		std::vector<size_t>&&,
+		std::vector<std::shared_ptr<const Segment<IndexType, IDType>>>&&)>;
 	Index(int dim, int segmentThreshold, std::tuple<ArgTypes...> args,
 		  std::optional<UpdateCallback> update_callback = std::nullopt)
 		: d_(dim),
@@ -80,7 +80,7 @@ class Index {
 		if (amount > segments_.size()) {
 			amount = segments_.size();
 		}
-		std::vector<std::shared_ptr<Segment<IndexType, IDType>>> inserted;
+		std::vector<std::shared_ptr<const Segment<IndexType, IDType>>> inserted;
 		std::vector<size_t> erased;
 		factory_.push_segment(segments_);
 		for (size_t i = 0; i < amount; ++i) {
@@ -91,6 +91,13 @@ class Index {
 		inserted.push_back(segments_.back());
 		if (update_callback_.has_value()) {
 			update_callback_.value()(std::move(erased), std::move(inserted));
+		}
+	}
+	void push_segment(
+		const std::shared_ptr<Segment<IndexType, IDType>>& segment) {
+		segments_.push_back(segment);
+		if (update_callback_.has_value()) {
+			update_callback_.value()({}, {segment});
 		}
 	}
 	size_t size() const { return segments_.size(); }

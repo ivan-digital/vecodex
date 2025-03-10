@@ -9,7 +9,8 @@ class SegmentFactory {
 	inline void push_segment(
 		std::deque<std::shared_ptr<Segment<IndexType, IDType>>>& data) const {
 		auto create = [&](ArgTypes... args) {
-			data.push_back(std::make_shared<Segment<IndexType, IDType>>(args...));
+			data.push_back(
+				std::make_shared<Segment<IndexType, IDType>>(args...));
 		};
 		std::apply(create, args_);
 	}

@@ -1,5 +1,7 @@
 // tests/VecodexIndexTest.cpp
 
+#include <algorithm>
+#include <cstdio>
 #include <iostream>
 #include <random>
 #include <unordered_set>
@@ -7,19 +9,53 @@
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
+
+using SegmentHNSWType =
+	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
+					 std::string>;
+using SegmentFLatType =
+	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>,
+					 std::string>;
 using IndexHNSWType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
 				   std::string, int, int, faiss::MetricType>;
 using IndexFlatType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
 				   std::string, int, faiss::MetricType>;
+int erased = 0;
+int inserted = 0;
+template <typename Segment>
+void update_callback(std::vector<size_t>&& ids,
+					 std::vector<std::shared_ptr<const Segment>>&& segs) {
+	erased += ids.size();
+	inserted += segs.size();
+}
+
+std::vector<std::string> serialization;
+
+template <typename Segment>
+void serialize_callback(std::vector<size_t>&& ids,
+						std::vector<std::shared_ptr<const Segment>>&& segs) {
+	static int called = 0;
+	called++;
+	if (called > 2) {
+		return;
+	}
+	for (auto&& seg : segs) {
+		serialization.push_back(seg->serialize());
+	}
+}
 
 template <class IDType>
 bool check_meta(const std::vector<IDType>& out_meta,
 				const std::vector<IDType>& true_meta) {
+	auto out_copy = out_meta;
+	auto true_copy = true_meta;
+	std::sort(out_copy.begin(), out_copy.end());
+	std::sort(true_copy.begin(), true_copy.end());
 	std::vector<IDType> diff;
-	std::set_symmetric_difference(out_meta.begin(), out_meta.end(),
-								  true_meta.begin(), true_meta.end(),
+	std::set_symmetric_difference(out_copy.begin(), out_copy.end(),
+								  true_copy.begin(), true_copy.end(),
 								  std::back_inserter(diff));
 	if (diff.size() == 0) {
 		return true;
@@ -74,8 +110,8 @@ TEST(VecodexIndexTest, MergeSegments) {
 	// Add vectors to create multiple segments
 	index.add(5, ids.data(), (float*)vectors);
 	// Merge segments
-	EXPECT_TRUE(index.mergeSegments(index.size()).size() == 3);
-	EXPECT_TRUE(index.size() == 1);
+	index.mergeSegments(index.size());
+	EXPECT_EQ(index.size(), 1);
 
 	// Verify that search still works correctly after merging
 	std::vector<float> query = {2.5f, 2.5f};
@@ -115,6 +151,51 @@ TEST(VecodexIndexTest, Delete) {
 	index.erase(1, ids.data());
 	results = index.search({3.0f, 3.0f}, 2);
 	EXPECT_TRUE(check_meta(results, {"vec6"}));
+}
+
+TEST(VecodexIndexTest, UpdateCallback) {
+	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2},
+						update_callback<SegmentFLatType>);
+	float vectors[5][2] = {
+		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
+	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
+
+	index.add(ids.size(), ids.data(), (float*)vectors);
+	ASSERT_EQ(inserted, 2);
+	ASSERT_EQ(erased, 0);
+	inserted = 0;
+	index.mergeSegments(index.size());
+	ASSERT_EQ(inserted, 1);
+	ASSERT_EQ(erased, 3);
+}
+
+TEST(VecodexIndexTest, Serialize) {
+	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2},
+						serialize_callback<SegmentFLatType>);
+	float vectors[4][2] = {
+		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}};
+	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4"};
+
+	index.add(ids.size(), ids.data(), (float*)vectors);
+	index.mergeSegments(index.size());
+
+	IndexFlatType index_copy(2, 2, {2, faiss::MetricType::METRIC_L2},
+							 serialize_callback<SegmentFLatType>);
+	for (auto&& filename : serialization) {
+		FILE* fd = std::fopen(filename.c_str(), "r");
+		baseline::FaissIndex<faiss::IndexFlat, std::string> base_index(fd);
+		auto new_segment =
+			std::make_shared<SegmentFLatType>(std::move(base_index));
+		index_copy.push_segment(new_segment);
+		std::fclose(fd);
+		std::remove(filename.c_str());
+	}
+	std::vector<float> q = {1.5f, 1.5f};
+	auto res = index_copy.search(q, 2);
+	EXPECT_TRUE(check_meta(res, {"vec1", "vec2"}));
+	q = {3.5f, 3.5f};
+	res = index_copy.search(q, 2);
+	EXPECT_TRUE(check_meta(res, {"vec3", "vec4"}));
 }
 
 TEST(VecodexIndexTest, Basic) {
