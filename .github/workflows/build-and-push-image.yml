@@ -27,10 +27,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build and Push the Docker image
-        if: github.event.pull_request.merged == true
+      - name: Build the Docker image
+        id: build
         run: |
           cd app
           docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Push the Docker image
+        if: github.event.pull_request.merged == true && steps.build.outcome == 'success'
+        run: |
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           
