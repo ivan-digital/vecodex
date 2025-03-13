@@ -16,3 +16,6 @@
 [submodule "app/external/abseil-cpp"]
 	path = app/external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
+[submodule "app/external/aws-cpp-sdk"]
+	path = app/external/aws-cpp-sdk
+	url = https://github.com/aws/aws-sdk-cpp.git
