@@ -42,7 +42,9 @@ void serialize_callback(std::vector<size_t>&& ids,
 		return;
 	}
 	for (auto&& seg : segs) {
-		serialization.push_back(seg->serialize());
+		std::string filename = "temp_" + std::to_string(std::rand());
+		seg->serialize(filename);
+		serialization.push_back(filename);
 	}
 }
 

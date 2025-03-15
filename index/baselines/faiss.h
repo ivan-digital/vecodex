@@ -109,8 +109,7 @@ class FaissIndex {
 		}
 	}
 
-	std::string serialize() const {
-		std::string filename = "temp_" + std::to_string(std::rand());
+	void serialize(const std::string& filename) const {
 		FILE* fd = std::fopen(filename.c_str(), "w");
 		faiss::write_index(index_.get(), fd);
 		writeBinary(fd, next_id);
@@ -131,7 +130,6 @@ class FaissIndex {
 			writeBinary(fd, id);
 		}
 		std::fclose(fd);
-		return filename;
 	}
 
 	size_t size() const { return ids_.size() - erased_.size(); }
