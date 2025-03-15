@@ -5,8 +5,10 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <functional>
 #include "Segment.h"
 #include "SegmentFactory.h"
+
 namespace vecodex {
 template <class IndexType, class IDType, typename... ArgTypes>
 class Index {
