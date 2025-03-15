@@ -6,6 +6,7 @@
 #include <set>
 #include <vector>
 #include <functional>
+#include <optional>
 #include "Segment.h"
 #include "SegmentFactory.h"
 
