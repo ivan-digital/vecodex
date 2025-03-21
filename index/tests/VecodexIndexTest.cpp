@@ -3,25 +3,25 @@
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <unordered_set>
+#include "IBaseIndex.h"
 #include "Index.h"
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
 
 using SegmentHNSWType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
-					 std::string>;
+	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
 using SegmentFLatType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-					 std::string>;
+	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
 using IndexHNSWType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
-				   std::string, int, int, faiss::MetricType>;
+	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>, int,
+				   int, faiss::MetricType>;
 using IndexFlatType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-				   std::string, int, faiss::MetricType>;
+	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>, int,
+				   faiss::MetricType>;
 int erased = 0;
 int inserted = 0;
 template <typename Segment>
@@ -185,9 +185,7 @@ TEST(VecodexIndexTest, Serialize) {
 							 serialize_callback<SegmentFLatType>);
 	for (auto&& filename : serialization) {
 		FILE* fd = std::fopen(filename.c_str(), "r");
-		baseline::FaissIndex<faiss::IndexFlat, std::string> base_index(fd);
-		auto new_segment =
-			std::make_shared<SegmentFLatType>(std::move(base_index));
+		auto new_segment = std::make_shared<SegmentFLatType>(fd);
 		index_copy.push_segment(new_segment);
 		std::fclose(fd);
 		std::remove(filename.c_str());
@@ -198,6 +196,22 @@ TEST(VecodexIndexTest, Serialize) {
 	q = {3.5f, 3.5f};
 	res = index_copy.search(q, 2);
 	EXPECT_TRUE(check_meta(res, {"vec3", "vec4"}));
+}
+
+TEST(VecodexIndexTest, IBaseIndex) {
+	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2});
+	vecodex::IBaseIndex<std::string>* base_index =
+		(vecodex::IBaseIndex<std::string>*)&index;
+
+	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
+	std::vector<std::string> ids = {"vec1", "vec2"};
+	base_index->add(2, ids.data(), (float*)vectors);
+	std::vector<float> query = {1.5f, 2.5f};
+	std::vector<std::string> results = base_index->search(query, 1);
+
+	// Verify the search result
+
+	EXPECT_TRUE(check_meta(results, {"vec1"}));
 }
 
 TEST(VecodexIndexTest, Basic) {
