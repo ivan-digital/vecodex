@@ -1,22 +1,26 @@
 #pragma once
 
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
-#include <functional>
-#include <optional>
+#include "IBaseIndex.h"
 #include "Segment.h"
 #include "SegmentFactory.h"
 
 namespace vecodex {
-template <class IndexType, class IDType, typename... ArgTypes>
-class Index {
+template <class IndexType, typename... ArgTypes>
+class Index final : public IBaseIndex<typename IndexType::ID> {
    public:
 	using UpdateCallback = std::function<void(
 		std::vector<size_t>&&,
-		std::vector<std::shared_ptr<const Segment<IndexType, IDType>>>&&)>;
+		std::vector<std::shared_ptr<const Segment<IndexType>>>&&)>;
+
+	using IDType = typename IndexType::ID;
+
 	Index(int dim, int segmentThreshold, std::tuple<ArgTypes...> args,
 		  std::optional<UpdateCallback> update_callback = std::nullopt)
 		: d_(dim),
@@ -26,8 +30,8 @@ class Index {
 		factory_.push_segment(segments_);
 	}
 
-	void add(size_t n, const IDType* ids, const float* vectors) {
-		std::vector<std::shared_ptr<const Segment<IndexType, IDType>>> inserted;
+	void add(size_t n, const IDType* ids, const float* vectors) override {
+		std::vector<std::shared_ptr<const Segment<IndexType>>> inserted;
 		inserted.reserve((n / segmentThreshold_) + 1);
 		size_t last = segments_.size() > 0 ? segments_.size() - 1 : 0;
 		while (n) {
@@ -54,7 +58,8 @@ class Index {
 		}
 	}
 
-	std::vector<IDType> search(const std::vector<float>& query, int k) const {
+	std::vector<IDType> search(const std::vector<float>& query,
+							   int k) const override {
 		std::set<SearchResult<IDType>> kth_stat;
 		for (const auto& segment : segments_) {
 			auto segmentResults = segment->search_query(query, k);
@@ -73,17 +78,17 @@ class Index {
 		return results;
 	}
 
-	void erase(size_t n, const IDType* ids) {
+	void erase(size_t n, const IDType* ids) override {
 		for (size_t i = 0; i < segments_.size(); ++i) {
 			segments_[i]->deleteBatch(n, ids);
 		}
 	}
 
-	void mergeSegments(size_t amount) {
+	void mergeSegments(size_t amount) override {
 		if (amount > segments_.size()) {
 			amount = segments_.size();
 		}
-		std::vector<std::shared_ptr<const Segment<IndexType, IDType>>> inserted;
+		std::vector<std::shared_ptr<const Segment<IndexType>>> inserted;
 		std::vector<size_t> erased;
 		factory_.push_segment(segments_);
 		for (size_t i = 0; i < amount; ++i) {
@@ -96,8 +101,8 @@ class Index {
 			update_callback_.value()(std::move(erased), std::move(inserted));
 		}
 	}
-	void push_segment(
-		const std::shared_ptr<Segment<IndexType, IDType>>& segment) {
+
+	void push_segment(const std::shared_ptr<Segment<IndexType>>& segment) {
 		segments_.push_back(segment);
 		if (update_callback_.has_value()) {
 			update_callback_.value()({}, {segment});
@@ -108,8 +113,8 @@ class Index {
    private:
 	int d_;
 	size_t segmentThreshold_;
-	SegmentFactory<IndexType, IDType, ArgTypes...> factory_;
-	std::deque<std::shared_ptr<Segment<IndexType, IDType>>> segments_;
+	SegmentFactory<IndexType, ArgTypes...> factory_;
+	std::deque<std::shared_ptr<Segment<IndexType>>> segments_;
 	std::optional<UpdateCallback> update_callback_ = std::nullopt;
 };
 }  // namespace vecodex

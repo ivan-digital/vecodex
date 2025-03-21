@@ -7,14 +7,19 @@
 #include <unordered_map>
 #include <vector>
 namespace vecodex {
-template <class IndexType, class IDType>
+template <class IndexType>
 class Segment : public IndexType {
    public:
+	using IDType = typename IndexType::ID;
 	template <typename... Args>
 	Segment(Args... args) : IndexType(args...) {}
 
 	Segment(IndexType&& index) : IndexType(std::move(index)) {
 		seg_id_ = rand();
+	}
+
+	Segment(FILE* fd) : IndexType(fd) {
+		std::fread(&seg_id_, sizeof(seg_id_), 1, fd);
 	}
 
 	Segment(const Segment&) = default;
@@ -53,12 +58,20 @@ class Segment : public IndexType {
 		return *static_cast<const IndexType*>(this);
 	}
 
+	void serialize(const std::string& filename) const {
+		FILE* fd = std::fopen(filename.c_str(), "w");
+		IndexType::serialize(fd);
+		std::fwrite(&seg_id_, sizeof(seg_id_), 1, fd);
+		std::fclose(fd);
+	}
+
 	size_t size() const { return IndexType::size(); }
 	size_t getID() const { return seg_id_; }
 
    private:
 	size_t seg_id_;
 };
+
 template <class IDType>
 struct SearchResult {
 	SearchResult(IDType id_value, float dist_value)
