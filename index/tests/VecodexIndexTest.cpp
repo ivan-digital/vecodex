@@ -184,7 +184,7 @@ TEST(VecodexIndexTest, Serialize) {
 	for (auto&& filename : serialization) {
 		FILE* fd = std::fopen(filename.c_str(), "r");
 		auto new_segment = std::make_shared<SegmentFLatType>(fd);
-		index_copy.push_segment(new_segment);
+		index_copy.pushSegment(new_segment);
 		std::fclose(fd);
 		std::remove(filename.c_str());
 	}

@@ -109,13 +109,13 @@ class FaissIndex {
 		}
 	}
 
-	void serialize(const std::string& filename) const {
+	void serialize_index(const std::string& filename) const {
 		FILE* fd = std::fopen(filename.c_str(), "w");
-		serialize(fd);
+		serialize_index(fd);
 		std::fclose(fd);
 	}
 
-	void serialize(FILE* fd) const {
+	void serialize_index(FILE* fd) const {
 		faiss::write_index(index_.get(), fd);
 		writeBinary(fd, next_id);
 		writeBinary(fd, ids_.size());

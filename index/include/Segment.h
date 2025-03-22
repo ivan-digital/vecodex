@@ -6,9 +6,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "IBaseSegment.h"
 namespace vecodex {
 template <class IndexType>
-class Segment : public IndexType {
+class Segment final : public IndexType,
+					  public vecodex::IBaseSegment<typename IndexType::ID> {
    public:
 	using IDType = typename IndexType::ID;
 	template <typename... Args>
@@ -28,16 +30,17 @@ class Segment : public IndexType {
 
 	Segment(Segment&& other) = default;
 
-	void addVectorBatch(size_t n, const IDType* ids, const float* vectors) {
+	void addVectorBatch(size_t n, const IDType* ids,
+						const float* vectors) override {
 		IndexType::add_batch(n, vectors, ids);
 	}
 
-	void deleteBatch(size_t n, const IDType* ids) {
+	void deleteBatch(size_t n, const IDType* ids) override {
 		IndexType::erase_batch(n, ids);
 	}
 	// Mark search as const
-	std::unordered_map<IDType, float> search_query(
-		const std::vector<float>& query, int k) const {
+	std::unordered_map<IDType, float> searchQuery(
+		const std::vector<float>& query, int k) const override {
 		std::vector<IDType> indices(k);
 		std::vector<float> distances(k);
 		size_t ans_k = IndexType::single_search(
@@ -58,15 +61,15 @@ class Segment : public IndexType {
 		return *static_cast<const IndexType*>(this);
 	}
 
-	void serialize(const std::string& filename) const {
+	void serialize(const std::string& filename) const override {
 		FILE* fd = std::fopen(filename.c_str(), "w");
-		IndexType::serialize(fd);
+		IndexType::serialize_index(fd);
 		std::fwrite(&seg_id_, sizeof(seg_id_), 1, fd);
 		std::fclose(fd);
 	}
 
 	size_t size() const { return IndexType::size(); }
-	size_t getID() const { return seg_id_; }
+	size_t getID() const override { return seg_id_; }
 
    private:
 	size_t seg_id_;

@@ -73,7 +73,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 							   int k) const override {
 		std::set<SearchResult<IDType>> kth_stat;
 		for (const auto& segment : segments_) {
-			auto segmentResults = segment->search_query(query, k);
+			auto segmentResults = segment->searchQuery(query, k);
 			for (const auto& p : segmentResults) {
 				kth_stat.emplace(p.first, p.second);
 				if (kth_stat.size() > k) {
@@ -113,11 +113,23 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 		}
 	}
 
-	void push_segment(const std::shared_ptr<Segment<IndexType>>& segment) {
+	void pushSegment(const std::shared_ptr<Segment<IndexType>>& segment) {
 		segments_.push_back(segment);
 		if (update_callback_.has_value()) {
 			update_callback_.value()({}, {segment});
 		}
+	}
+
+	bool eraseSegment(size_t id) {
+		auto erase_it =
+			std::find(segments_.begin(), segments_.end(),
+					  [&](const std::shared_ptr<Segment<IndexType>>& segment) {
+						  return segment->getID() == id;
+					  });
+		if (erase_it == segments_.end()) {
+			return false;
+		}
+		return true;
 	}
 	size_t size() const { return segments_.size(); }
 
