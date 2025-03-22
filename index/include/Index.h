@@ -12,7 +12,7 @@
 #include "SegmentFactory.h"
 
 namespace vecodex {
-template <class IndexType, typename... ArgTypes>
+template <class IndexType>
 class Index final : public IBaseIndex<typename IndexType::ID> {
    public:
 	using UpdateCallback = std::function<void(
@@ -20,14 +20,25 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 		std::vector<std::shared_ptr<const Segment<IndexType>>>&&)>;
 
 	using IDType = typename IndexType::ID;
-
-	Index(int dim, int segmentThreshold, std::tuple<ArgTypes...> args,
-		  std::optional<UpdateCallback> update_callback = std::nullopt)
+	template <typename... ArgTypes>
+	Index(int dim, int segmentThreshold,
+		  std::optional<UpdateCallback> update_callback, ArgTypes... args)
 		: d_(dim),
 		  segmentThreshold_(segmentThreshold),
-		  factory_(std::move(args)),
+		  factory_(std::make_shared<SegmentFactory<IndexType, ArgTypes...>>(
+			  std::forward_as_tuple(args...))),
 		  update_callback_(update_callback) {
-		factory_.push_segment(segments_);
+		segments_.push_back(std::move(factory_->create()));
+	}
+
+	Index(int dim, int segmentThreshold,
+		  std::optional<UpdateCallback> update_callback,
+		  const std::shared_ptr<SegmentFactoryBase<IndexType>>& factory)
+		: d_(dim),
+		  segmentThreshold_(segmentThreshold),
+		  factory_(factory),
+		  update_callback_(update_callback) {
+		segments_.push_back(std::move(factory_->create()));
 	}
 
 	void add(size_t n, const IDType* ids, const float* vectors) override {
@@ -45,7 +56,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 			vectors += (batch * d_);
 			n -= batch;
 			if (segments_.back()->size() == segmentThreshold_) {
-				factory_.push_segment(segments_);
+				segments_.push_back(std::move(factory_->create()));
 			}
 		}
 		for (size_t i = last; i < segments_.size(); ++i) {
@@ -90,7 +101,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 		}
 		std::vector<std::shared_ptr<const Segment<IndexType>>> inserted;
 		std::vector<size_t> erased;
-		factory_.push_segment(segments_);
+		segments_.push_back(std::move(factory_->create()));
 		for (size_t i = 0; i < amount; ++i) {
 			erased.push_back(segments_.front()->getID());
 			segments_.back()->mergeSegment(segments_.front());
@@ -113,7 +124,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
    private:
 	int d_;
 	size_t segmentThreshold_;
-	SegmentFactory<IndexType, ArgTypes...> factory_;
+	std::shared_ptr<SegmentFactoryBase<IndexType>> factory_;
 	std::deque<std::shared_ptr<Segment<IndexType>>> segments_;
 	std::optional<UpdateCallback> update_callback_ = std::nullopt;
 };

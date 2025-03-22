@@ -2,16 +2,20 @@
 #include "Segment.h"
 #include "faiss/MetricType.h"
 namespace vecodex {
+template <typename IndexType>
+class SegmentFactoryBase {
+   public:
+	virtual std::shared_ptr<Segment<IndexType>> create() const = 0;
+};
 template <class IndexType, typename... ArgTypes>
-class SegmentFactory {
+class SegmentFactory final : public SegmentFactoryBase<IndexType> {
    public:
 	SegmentFactory(std::tuple<ArgTypes...>&& args) : args_(std::move(args)) {}
-	inline void push_segment(
-		std::deque<std::shared_ptr<Segment<IndexType>>>& data) const {
+	std::shared_ptr<Segment<IndexType>> create() const override {
 		auto create = [&](ArgTypes... args) {
-			data.push_back(std::make_shared<Segment<IndexType>>(args...));
+			return std::make_shared<Segment<IndexType>>(args...);
 		};
-		std::apply(create, args_);
+		return std::apply(create, args_);
 	}
 
    private:
