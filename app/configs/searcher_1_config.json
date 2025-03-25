@@ -2,5 +2,11 @@
     "mode": "searcher",
     "port": "44400",
     "hostname": "searcher_1",
-    "etcd_address": "http://etcd:2379"
+    "etcd_address": "http://etcd:2379",
+    "s3-host": "http://minio:9000",
+    "indexes": [
+        {
+            "id": "0"
+        }
+    ]
 }
