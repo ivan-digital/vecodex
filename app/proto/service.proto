@@ -10,7 +10,7 @@ message Document {
 
 message SearchRequest {
     repeated float vector_data = 1;
-    optional int32 k = 2;
+    int32 k = 2;
 }
 
 message SearchResponse {
