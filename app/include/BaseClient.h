@@ -12,6 +12,6 @@ public:
     BaseClient(const std::shared_ptr<grpc::ChannelInterface> channel);
 
     SearchResponse getProcessedDocuments(const SearchRequest& request) const;
-private:
+protected:
     std::unique_ptr<BaseService::Stub> stub_;
 };
