@@ -96,8 +96,11 @@ endif()
 
 # Main Library Target
 add_library(vecodex-index INTERFACE)
-
-target_include_directories(vecodex-index INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(vecodex-index INTERFACE faiss)
+target_include_directories(vecodex-index INTERFACE
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/baselines
+        external/faiss)
 
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
