@@ -1,10 +1,13 @@
 {
-    "mode": "searcher",
+    "mode": "writer",
     "port": "44400",
-    "hostname": "searcher_2",
+    "hostname": "writer",
     "etcd_address": "http://etcd:2379",
     "s3-host": "http://minio:9000",
     "indexes": [
+        {
+            "id": "0"
+        },
         {
             "id": "1"
         }
