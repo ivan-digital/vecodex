@@ -5,6 +5,7 @@
 #include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/DeleteObjectRequest.h>
+#include <aws/s3/model/CreateBucketRequest.h>
 
 StorageClient::StorageClient(const std::string& host) {
     Aws::InitAPI(options);
@@ -19,11 +20,21 @@ StorageClient::~StorageClient() {
     Aws::ShutdownAPI(options);
 }
 
-void StorageClient::logIn(const std::string& login, const std::string& password) {
+bool StorageClient::logIn(const std::string& login, const std::string& password) {
     Aws::Auth::AWSCredentials credentials;
     credentials.SetAWSAccessKeyId(login);
     credentials.SetAWSSecretKey(password);
     s3Client.emplace(credentials, config.value(), Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, true);
+
+    // check connection
+    auto buckets = s3Client->ListBuckets();
+    if (!buckets.IsSuccess()) {
+        std::cerr << "Connection failed, check login and password" << std::endl;
+    }
+    else {
+        std::cout << "S3 connected" << std::endl;
+    }
+    return buckets.IsSuccess();
 }
 
 bool StorageClient::putObject(const std::string& bucket_name, const std::string& filename) {
@@ -87,5 +98,21 @@ bool StorageClient::delObject(const std::string& bucket_name, const std::string&
         std::cout << "Successfully deleted the object." << std::endl;
     }
 
+    return outcome.IsSuccess();
+}
+
+bool StorageClient::createBucket(const std::string& bucket_name) {
+    Aws::S3::Model::CreateBucketRequest request;
+    request.SetBucket(bucket_name);
+
+    Aws::S3::Model::CreateBucketOutcome outcome = s3Client->CreateBucket(request);
+    
+    if (!outcome.IsSuccess()) {
+        auto err = outcome.GetError();
+        std::cerr << "Error: createBucket: " << err.GetExceptionName() << ": " << err.GetMessage() << std::endl;
+    }
+    else {
+        std::cout << "Created bucket " << bucket_name << std::endl;
+    }
     return outcome.IsSuccess();
 }
