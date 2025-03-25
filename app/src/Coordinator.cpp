@@ -22,8 +22,11 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
             << std::endl;
     }
 
+    // todo
+    /*
     auto new_document = response->add_result();
     *new_document = request->data();
+     */
     return grpc::Status::OK;
 }
 
