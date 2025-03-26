@@ -56,7 +56,7 @@ services:
       - "2380:2380"
 
   minio:
-    container_name: minio
+    image: minio/minio
     ports:
       - "9000:9000"
       - "9001:9001"
