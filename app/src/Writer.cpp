@@ -12,11 +12,17 @@ WriterImpl::WriterImpl(const std::string& host, const std::string& port, const s
     storage_client.logIn("user", "password"); // todo
 
     for (const auto& item : indexes_config) {
-        indexes[item["id"].get<std::string>()] = std::make_shared<IndexHNSWType>(
+      	std::string id = item["id"].get<std::string>();
+        indexes[id] = std::make_shared<IndexHNSWType>(
             2, 3,
             std::bind(&WriterImpl::indexUpdateCallback, this, std::placeholders::_1, std::placeholders::_2),
             2, 2, faiss::MetricType::METRIC_L2
         );
+
+        bool ok = storage_client.createBucket(id);
+        if (!ok) {
+        	// todo
+        }
     }
 }
 
@@ -64,14 +70,24 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
     std::vector<size_t> deleted;
     added.reserve(ids.size());
     deleted.reserve(segs.size());
-    for (auto id : ids) {
+    for (const auto& added_seg_ptr : segs) {
+      	size_t id = added_seg_ptr->getID();
+      	std::string added_filename = std::to_string(id);
         added.push_back(id);
-        storage_client.delObject(index_id, std::to_string(id));
-
+        added_seg_ptr->serialize(added_filename);
+        bool ok = storage_client.putObject(index_id, added_filename);
+        if (!ok) {
+        	// todo
+        }
+        std::remove(added_filename.c_str());
     }
-    for (const auto& seg : segs) {
-        deleted.push_back(seg->getID());
-        storage_client.delObject(index_id, std::to_string(seg->getID()));
+
+    for (auto id : ids) {
+      	deleted.push_back(id);
+        bool ok = storage_client.delObject(index_id, std::to_string(id));
+        if (!ok) {
+        	// todo
+        }
     }
 
     auto hosts = etcd_client.ListSearcherHostsByIndexId(index_id);
