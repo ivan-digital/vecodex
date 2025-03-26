@@ -1,6 +1,8 @@
 FROM gcc:12
 
-WORKDIR /app
+WORKDIR /
+
+COPY ./build-dev.sh /
 
 RUN apt-get update && \
     apt-get install -y cmake \
@@ -8,5 +10,9 @@ RUN apt-get update && \
     libcpprest-dev \
     libc++-dev
 RUN apt-get install -y libboost-dev
+RUN apt-get install -y libomp-dev \
+    libopenblas-dev \
+    libgtest-dev \
+    libgflags-dev
 
 CMD ./build-dev.sh

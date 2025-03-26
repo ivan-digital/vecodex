@@ -1,7 +1,5 @@
 #!/bin/bash
 
-apt-get install -y libomp-dev libopenblas-dev libgtest-dev libgflags-dev
-
 cd /app/external/grpc/ && \
 mkdir -p cmake/build && \
 cd cmake/build && \
@@ -34,6 +32,7 @@ cmake -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_INSTALL_PREFIX=/app \
       -DRE2_BUILD_TESTING=OFF \
       /app
+ldconfig
 make -j8 vecodex-app
 
 echo "$1"

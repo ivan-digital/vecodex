@@ -30,7 +30,6 @@ jobs:
       - name: Build the Docker image
         id: build
         run: |
-          cd app
           docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Push the Docker image
