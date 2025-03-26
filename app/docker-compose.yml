@@ -34,5 +34,17 @@ services:
       - ALLOW_NONE_AUTHENTICATION=yes
       - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
     ports:
-      - 2379:2379
-      - 2380:2380
+      - "2379:2379"
+      - "2380:2380"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - ~/minio/data:/data
+    command: server /data --console-address ":9001"
