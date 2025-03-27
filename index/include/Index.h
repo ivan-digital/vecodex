@@ -7,19 +7,19 @@
 #include <optional>
 #include <set>
 #include <vector>
-#include "IBaseIndex.h"
+#include "IIndex.h"
 #include "Segment.h"
 #include "SegmentFactory.h"
 
 namespace vecodex {
 template <class IndexType>
-class Index final : public IBaseIndex<typename IndexType::ID> {
+class Index final : public IIndex<typename IndexType::ID> {
    public:
+	using IDType = typename IndexType::ID;
 	using UpdateCallback = std::function<void(
 		std::vector<size_t>&&,
-		std::vector<std::shared_ptr<const Segment<IndexType>>>&&)>;
+		std::vector<std::shared_ptr<const ISegment<IDType>>>&&)>;
 
-	using IDType = typename IndexType::ID;
 	template <typename... ArgTypes>
 	Index(int dim, int segmentThreshold,
 		  std::optional<UpdateCallback> update_callback, ArgTypes... args)
@@ -42,7 +42,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 	}
 
 	void add(size_t n, const IDType* ids, const float* vectors) override {
-		std::vector<std::shared_ptr<const Segment<IndexType>>> inserted;
+		std::vector<std::shared_ptr<const ISegment<IDType>>> inserted;
 		inserted.reserve((n / segmentThreshold_) + 1);
 		size_t last = segments_.size() > 0 ? segments_.size() - 1 : 0;
 		while (n) {
@@ -99,7 +99,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 		if (amount > segments_.size()) {
 			amount = segments_.size();
 		}
-		std::vector<std::shared_ptr<const Segment<IndexType>>> inserted;
+		std::vector<std::shared_ptr<const ISegment<IDType>>> inserted;
 		std::vector<size_t> erased;
 		segments_.push_back(std::move(factory_->create()));
 		for (size_t i = 0; i < amount; ++i) {

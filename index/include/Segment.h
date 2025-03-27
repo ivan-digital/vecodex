@@ -6,21 +6,21 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "IBaseSegment.h"
+#include "IBaseIndex.h"
+#include "ISegment.h"
 namespace vecodex {
 template <class IndexType>
-class Segment final : public IndexType,
-					  public vecodex::IBaseSegment<typename IndexType::ID> {
+class Segment final : public vecodex::ISegment<typename IndexType::ID> {
    public:
 	using IDType = typename IndexType::ID;
 	template <typename... Args>
-	Segment(Args... args) : IndexType(args...) {}
+	Segment(Args... args) : index_(std::make_shared<IndexType>(args...)) {}
 
-	Segment(IndexType&& index) : IndexType(std::move(index)) {
+	Segment(IndexType&& index) : index_(std::move(index.index_)) {
 		seg_id_ = rand();
 	}
 
-	Segment(FILE* fd) : IndexType(fd) {
+	Segment(FILE* fd) : index_(std::make_shared<IndexType>(fd)) {
 		std::fread(&seg_id_, sizeof(seg_id_), 1, fd);
 	}
 
@@ -32,19 +32,19 @@ class Segment final : public IndexType,
 
 	void addVectorBatch(size_t n, const IDType* ids,
 						const float* vectors) override {
-		IndexType::add_batch(n, vectors, ids);
+		index_->add_batch(n, vectors, ids);
 	}
 
 	void deleteBatch(size_t n, const IDType* ids) override {
-		IndexType::erase_batch(n, ids);
+		index_->erase_batch(n, ids);
 	}
 	// Mark search as const
 	std::unordered_map<IDType, float> searchQuery(
 		const std::vector<float>& query, int k) const override {
 		std::vector<IDType> indices(k);
 		std::vector<float> distances(k);
-		size_t ans_k = IndexType::single_search(
-			k, query.data(), distances.data(), indices.data());
+		size_t ans_k = index_->single_search(k, query.data(), distances.data(),
+											 indices.data());
 		std::unordered_map<IDType, float> result;
 		result.reserve(ans_k);
 		for (size_t i = 0; i < ans_k; ++i) {
@@ -54,25 +54,23 @@ class Segment final : public IndexType,
 	}
 
 	void mergeSegment(const std::shared_ptr<Segment>& other) {
-		IndexType::merge_from_other(std::move(other->getIndex()));
+		index_->merge_from_other(std::move(other->getIndex()));
 	}
-	IndexType& getIndex() { return *static_cast<IndexType*>(this); }
-	const IndexType& getIndex() const {
-		return *static_cast<const IndexType*>(this);
-	}
+	std::shared_ptr<IBaseIndex<IDType>> getIndex() { return index_; }
 
 	void serialize(const std::string& filename) const override {
 		FILE* fd = std::fopen(filename.c_str(), "w");
-		IndexType::serialize_index(fd);
+		index_->serialize_index(fd);
 		std::fwrite(&seg_id_, sizeof(seg_id_), 1, fd);
 		std::fclose(fd);
 	}
 
-	size_t size() const { return IndexType::size(); }
+	size_t size() const { return index_->size(); }
 	size_t getID() const override { return seg_id_; }
 
    private:
 	size_t seg_id_;
+	std::shared_ptr<IBaseIndex<IDType>> index_;
 };
 
 template <class IDType>

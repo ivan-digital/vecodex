@@ -6,7 +6,7 @@
 #include <memory>
 #include <random>
 #include <unordered_set>
-#include "IBaseIndex.h"
+#include "IIndex.h"
 #include "Index.h"
 #include "faiss.h"
 #include "gtest/gtest.h"
@@ -22,18 +22,18 @@ using IndexFlatType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
 int erased = 0;
 int inserted = 0;
-template <typename Segment>
-void update_callback(std::vector<size_t>&& ids,
-					 std::vector<std::shared_ptr<const Segment>>&& segs) {
+void update_callback(
+	std::vector<size_t>&& ids,
+	std::vector<std::shared_ptr<const vecodex::ISegment<std::string>>>&& segs) {
 	erased += ids.size();
 	inserted += segs.size();
 }
 
 std::vector<std::string> serialization;
 
-template <typename Segment>
-void serialize_callback(std::vector<size_t>&& ids,
-						std::vector<std::shared_ptr<const Segment>>&& segs) {
+void serialize_callback(
+	std::vector<size_t>&& ids,
+	std::vector<std::shared_ptr<const vecodex::ISegment<std::string>>>&& segs) {
 	static int called = 0;
 	called++;
 	if (called > 2) {
@@ -154,8 +154,7 @@ TEST(VecodexIndexTest, Delete) {
 }
 
 TEST(VecodexIndexTest, UpdateCallback) {
-	IndexFlatType index(2, 2, update_callback<SegmentFLatType>, 2,
-						faiss::MetricType::METRIC_L2);
+	IndexFlatType index(2, 2, update_callback, 2, faiss::MetricType::METRIC_L2);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -170,7 +169,7 @@ TEST(VecodexIndexTest, UpdateCallback) {
 }
 
 TEST(VecodexIndexTest, Serialize) {
-	IndexFlatType index(2, 2, serialize_callback<SegmentFLatType>, 2,
+	IndexFlatType index(2, 2, serialize_callback, 2,
 						faiss::MetricType::METRIC_L2);
 	float vectors[4][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}};
@@ -179,7 +178,7 @@ TEST(VecodexIndexTest, Serialize) {
 	index.add(ids.size(), ids.data(), (float*)vectors);
 	index.mergeSegments(index.size());
 
-	IndexFlatType index_copy(2, 2, serialize_callback<SegmentFLatType>, 2,
+	IndexFlatType index_copy(2, 2, serialize_callback, 2,
 							 faiss::MetricType::METRIC_L2);
 	for (auto&& filename : serialization) {
 		FILE* fd = std::fopen(filename.c_str(), "r");
@@ -196,10 +195,10 @@ TEST(VecodexIndexTest, Serialize) {
 	EXPECT_TRUE(check_meta(res, {"vec3", "vec4"}));
 }
 
-TEST(VecodexIndexTest, IBaseIndex) {
+TEST(VecodexIndexTest, IIndex) {
 	IndexFlatType index(2, 2, std::nullopt, 2, faiss::MetricType::METRIC_L2);
-	vecodex::IBaseIndex<std::string>* base_index =
-		(vecodex::IBaseIndex<std::string>*)&index;
+	vecodex::IIndex<std::string>* base_index =
+		(vecodex::IIndex<std::string>*)&index;
 
 	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
 	std::vector<std::string> ids = {"vec1", "vec2"};

@@ -4,7 +4,7 @@
 #include <vector>
 namespace vecodex {
 template <typename IDType>
-class IBaseSegment {
+class ISegment {
    public:
 	virtual void addVectorBatch(size_t n, const IDType* ids,
 								const float* vectors) = 0;

@@ -3,13 +3,14 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include "IBaseIndex.h"
 #include "SegmentFactory.h"
 #include "faiss/IndexFlat.h"
 #include "faiss/IndexHNSW.h"
 #include "faiss/index_io.h"
 namespace baseline {
 template <class BaseIndex, typename IDType>
-class FaissIndex {
+class FaissIndex final : public vecodex::IBaseIndex<IDType> {
    public:
 	using ID = IDType;
 	template <typename... Args>
@@ -47,7 +48,7 @@ class FaissIndex {
 	FaissIndex(const std::string& filename)
 		: index_(faiss::read_index(filename.c_str())) {}
 
-	void add_batch(size_t n, const float* vectors, const IDType* ids) {
+	void add_batch(size_t n, const float* vectors, const IDType* ids) override {
 		index_->add(n, vectors);
 		for (size_t i = 0; i < n; ++i) {
 			ids_[ids[i]] = next_id;
@@ -57,7 +58,7 @@ class FaissIndex {
 	}
 
 	size_t single_search(size_t k, const float* q, float* dist,
-						 IDType* ids) const {
+						 IDType* ids) const override {
 		std::vector<float> res_dist(k + erased_.size());
 		std::vector<faiss::idx_t> res(k + erased_.size());
 		index_->search(1, q, res.size(), res_dist.data(), res.data());
@@ -83,24 +84,29 @@ class FaissIndex {
 		return i;
 	}
 
-	void merge_from_other(FaissIndex&& other) {
+	void merge_from_other(
+		std::shared_ptr<vecodex::IBaseIndex<IDType>> other) override {
+		FaissIndex* other_index = dynamic_cast<FaissIndex*>(other.get());
+		if (other_index == nullptr) {
+			throw std::runtime_error("Couldn't cast index into FaissIndex");
+		}
 		std::vector<faiss::idx_t> idxs;
 		std::vector<IDType> ids;
-		idxs.reserve(other.inv_ids_.size());
-		for (const auto& [key, value] : other.inv_ids_) {
-			if (other.erased_.count(key)) {
+		idxs.reserve(other_index->inv_ids_.size());
+		for (const auto& [key, value] : other_index->inv_ids_) {
+			if (other_index->erased_.count(key)) {
 				continue;
 			}
 			ids.push_back(value);
 			idxs.push_back(key);
 		}
 		std::vector<float> vectors(idxs.size());
-		other.index_->reconstruct_batch(idxs.size(), idxs.data(),
-										vectors.data());
+		other_index->index_->reconstruct_batch(idxs.size(), idxs.data(),
+											   vectors.data());
 		add_batch(ids.size(), vectors.data(), ids.data());
 	}
 
-	void erase_batch(size_t n, const IDType* ids) {
+	void erase_batch(size_t n, const IDType* ids) override {
 		for (size_t i = 0; i < n; ++i) {
 			if (!ids_.count(ids[i])) {
 				continue;
@@ -109,13 +115,13 @@ class FaissIndex {
 		}
 	}
 
-	void serialize_index(const std::string& filename) const {
+	void serialize_index(const std::string& filename) const override {
 		FILE* fd = std::fopen(filename.c_str(), "w");
 		serialize_index(fd);
 		std::fclose(fd);
 	}
 
-	void serialize_index(FILE* fd) const {
+	void serialize_index(FILE* fd) const override {
 		faiss::write_index(index_.get(), fd);
 		writeBinary(fd, next_id);
 		writeBinary(fd, ids_.size());
@@ -136,7 +142,7 @@ class FaissIndex {
 		}
 	}
 
-	size_t size() const { return ids_.size() - erased_.size(); }
+	size_t size() const override { return ids_.size() - erased_.size(); }
 	IDType getID(faiss::idx_t idx) const { return inv_ids_.at(idx); }
 
    private:
