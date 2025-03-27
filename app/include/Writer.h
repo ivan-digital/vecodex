@@ -42,7 +42,7 @@ public:
     grpc::Status ProcessWriteRequest(grpc::ServerContext* context, const WriteRequest* request, WriteResponse* response) override;
 
 private:
-  	void indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs);
+  	void indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs, const std::string& index_id);
 
     std::string host;
     std::string port;

@@ -15,7 +15,7 @@ WriterImpl::WriterImpl(const std::string& host, const std::string& port, const s
       	std::string id = item["id"].get<std::string>();
         indexes[id] = std::make_shared<IndexHNSWType>(
             2, 3,
-            std::bind(&WriterImpl::indexUpdateCallback, this, std::placeholders::_1, std::placeholders::_2),
+            std::bind(&WriterImpl::indexUpdateCallback, this, std::placeholders::_1, std::placeholders::_2, id),
             2, 2, faiss::MetricType::METRIC_L2
         );
 
@@ -63,9 +63,7 @@ WriterImpl::~WriterImpl() {
 }
 
 // todo: slow operation, consider using async
-void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs) {
-    std::string index_id = "0"; // todo: callback should know index id
-
+void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs, const std::string& index_id) {
     std::vector<size_t> added;
     std::vector<size_t> deleted;
     added.reserve(ids.size());
