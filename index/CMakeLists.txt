@@ -109,6 +109,11 @@ target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baseli
 # Link Libraries to Test Executable
 target_link_libraries(VecodexIndexTest PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
+add_executable(Benchmark tests/Benchmark.cpp)
+target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
+
+target_link_libraries(Benchmark PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+
 # Additional macOS-specific settings
 if(APPLE)
     # Example: Link frameworks if needed

@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include "IIndex.h"
 #include "Index.h"
+#include "IndexFactory.h"
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
@@ -209,6 +210,16 @@ TEST(VecodexIndexTest, IIndex) {
 	// Verify the search result
 
 	EXPECT_TRUE(check_meta(results, {"vec1"}));
+}
+
+TEST(VecodexIndexTest, JsonParser) {
+	Json::Value json;
+	json["type"] = "faissFlat";
+	json["library"] = "faiss";
+	json["dim"] = 2;
+	json["threshold"] = 100;
+	json["metric"] = "L2";
+	auto index = vecodex::CreateIndex<std::string>(json);
 }
 
 TEST(VecodexIndexTest, Basic) {
