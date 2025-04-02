@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <functional>
+#include <iostream>
 
 WriterImpl::WriterImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& indexes_config)
     : host(host), port(port), etcd_client(etcd_addr), storage_client(s3_host) {
@@ -18,7 +19,7 @@ WriterImpl::WriterImpl(const std::string& host, const std::string& port, const s
             std::bind(&WriterImpl::indexUpdateCallback, this, std::placeholders::_1, std::placeholders::_2, id),
             2, 2, faiss::MetricType::METRIC_L2
         );
-
+        std::cout << "Created index " << id << std::endl;
         bool ok = storage_client.createBucket(id);
         if (!ok) {
         	// todo
