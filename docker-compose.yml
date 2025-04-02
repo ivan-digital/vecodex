@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:44400"
       - "8001:44401"
-    command: ./cmake/build/vecodex-app --config-path /app/configs/coordinator_config.json
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/coordinator_config.json
     depends_on:
       searcher_1:
         condition: service_started
@@ -17,7 +17,7 @@ services:
     image: app:latest
     ports:
       - "8002:44400"
-    command: ./cmake/build/vecodex-app --config-path /app/configs/searcher_1_config.json
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/searcher_1_config.json
     depends_on:
       etcd:
         condition: service_started
@@ -28,7 +28,7 @@ services:
     image: app:latest
     ports:
       - "8003:44400"
-    command: ./cmake/build/vecodex-app --config-path /app/configs/searcher_2_config.json
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/searcher_2_config.json
     depends_on:
       etcd:
         condition: service_started
@@ -39,7 +39,7 @@ services:
     image: app:latest
     ports:
       - "8004:44400"
-    command: ./cmake/build/vecodex-app --config-path /app/configs/writer_config.json
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/writer_config.json
     depends_on:
       etcd:
         condition: service_started
