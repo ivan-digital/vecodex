@@ -25,6 +25,9 @@ public:
     bool createBucket(const std::string& bucket_name);
 
 private:
+    std::string makeBucketName(const std::string& bucket_name) const;
+
+private:
     Aws::SDKOptions options;
     std::optional<Aws::Client::ClientConfiguration> config;
     std::optional<Aws::S3::S3Client> s3Client;
