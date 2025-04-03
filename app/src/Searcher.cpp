@@ -31,6 +31,19 @@ grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, co
 grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, const UpdateRequest* request, UpdateResponse* response) {
     std::vector<size_t> added(request->added().begin(), request->added().end());
     std::vector<size_t> deleted(request->deleted().begin(), request->deleted().end());
+
+    std::cout << "Received update\n";
+    std::cout << "added:\n";
+    for (auto id : added) {
+    	std::cout << id << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "deleted:\n";
+    for (auto id : deleted) {
+    	std::cout << id << " ";
+    }
+    std::cout << std::endl;
+
 	for (size_t added_id : added) {
   		std::string segment_filename = std::to_string(added_id);
   		bool ok = storage_client.getObject(index_id, segment_filename);
@@ -55,12 +68,12 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
 
 void SearcherImpl::Init() {
     etcd_client.AddSearcherHost(host + ":" + port);
-    etcd_client.AddSearcherHostByIndexId("0", host + ":" + port);
+    etcd_client.AddSearcherHostByIndexId(index_id, host + ":" + port);
 }
 
 void SearcherImpl::GracefulShutdown() {
     etcd_client.RemoveSearcherHost(host + ":" + port);
-    etcd_client.RemoveSearcherHostByIndexId("0", host + ":" + port);
+    etcd_client.RemoveSearcherHostByIndexId(index_id, host + ":" + port);
 }
 
 
