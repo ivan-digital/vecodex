@@ -31,9 +31,9 @@ grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const
 
     std::vector<float> vec(request->data().vector_data().begin(), request->data().vector_data().end());
     std::unordered_map<std::string, std::string> attributes(request->data().attributes().begin(), request->data().attributes().end());
-
+	std::string vec_id = request->data().id();
     // ----- Testing -----
-    std::cout << "Document received\nid: " << request->data().id() << std::endl;
+    std::cout << "Document received\nid: " << vec_id << std::endl;
     for (float i : vec) {
         std::cout << i << ", ";
     }
@@ -52,10 +52,10 @@ grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const
     }
 
     if (attributes.find("delete") == attributes.end()) {
-    	indexes[index_id]->add(1, &index_id, vec.data());
+    	indexes[index_id]->add(1, &vec_id, vec.data());
     }
     else {
-    	indexes[index_id]->erase(1, &index_id);
+    	indexes[index_id]->erase(1, &vec_id);
     }
     return grpc::Status::OK;
 }
