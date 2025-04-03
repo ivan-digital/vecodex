@@ -65,10 +65,21 @@ WriterImpl::~WriterImpl() {
 
 // todo: slow operation, consider using async
 void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs, const std::string& index_id) {
-    std::vector<size_t> added;
+    std::cout << "Run callback\n";
+    std::cout << "index id: " << index_id << std::endl;
+    std::cout << "added:\n";
+    for (const auto& added_seg_ptr : segs) {
+    	std::cout << added_seg_ptr->getID() << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "deleted:\n";
+    for (auto id : ids) {
+    	std::cout << id << " ";
+    }
+    std::cout << std::endl;
+
+  	std::vector<size_t> added;
     std::vector<size_t> deleted;
-    added.reserve(ids.size());
-    deleted.reserve(segs.size());
     for (const auto& added_seg_ptr : segs) {
       	size_t id = added_seg_ptr->getID();
       	std::string added_filename = std::to_string(id);
@@ -90,6 +101,10 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
     }
 
     auto hosts = etcd_client.ListSearcherHostsByIndexId(index_id);
+    std::cout << "searcher hosts:\n";
+    for (const auto& host : hosts) {
+    	std::cout << host << std::endl;
+    }
     UpdateRequest request;
     request.mutable_added()->Assign(added.begin(), added.end());
     request.mutable_deleted()->Assign(deleted.begin(), deleted.end());
