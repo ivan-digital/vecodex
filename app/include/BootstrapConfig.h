@@ -17,7 +17,7 @@ public:
             .default_value("");
         program_.add_argument("--hostname")
             .help("...")
-            .default_value("localhost");
+            .default_value("");
         program_.add_argument("--listening-port")
             .help("...")
             .default_value("");
