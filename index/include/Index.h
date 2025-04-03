@@ -64,7 +64,7 @@ class Index final : public IBaseIndex<typename IndexType::ID> {
 				inserted.push_back(segments_[i]);
 			}
 		}
-		if (update_callback_) {
+		if (update_callback_ && !inserted.empty()) {
 			update_callback_.value()({}, std::move(inserted));
 		}
 	}
