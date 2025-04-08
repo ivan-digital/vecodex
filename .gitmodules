@@ -7,9 +7,6 @@
 [submodule "index/external/googletest"]
 	path = index/external/googletest
 	url = https://github.com/google/googletest.git
-[submodule "index/external/jsoncpp"]
-	path = index/external/jsoncpp
-	url = https://github.com/open-source-parsers/jsoncpp.git
 [submodule "app/external/etcd-cpp-apiv3"]
 	path = app/external/etcd-cpp-apiv3
 	url = https://github.com/etcd-cpp-apiv3/etcd-cpp-apiv3
