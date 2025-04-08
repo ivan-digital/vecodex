@@ -24,10 +24,8 @@ int main(int argc, char** argv) {
 	std::uniform_int_distribution<>(0, N);
 	std::uniform_int_distribution<> dis(0, N);
 	std::uniform_real_distribution<> dis_real(0.0, 10.0);
-	IndexFlatType flat_index(dim, 100, std::nullopt, dim,
-							 faiss::MetricType::METRIC_L2);
-	IndexHNSWType hnsw_index(dim, 100, std::nullopt, dim, 32,
-							 faiss::MetricType::METRIC_L2);
+	IndexFlatType flat_index(dim, 100, dim, faiss::MetricType::METRIC_L2);
+	IndexHNSWType hnsw_index(dim, 100, dim, 32, faiss::MetricType::METRIC_L2);
 
 	int added = 0;
 	int queried = 0;

@@ -23,12 +23,12 @@ std::shared_ptr<vecodex::IIndex<IDType>> CreateIndex(const Json::Value& json) {
 		if (type == faissFlat) {
 			return std::make_shared<
 				vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, IDType>>>(
-				dim, threshold, std::nullopt, dim, metric_type);
+				dim, threshold, dim, metric_type);
 		} else if (type == faissHNSWFlat) {
 			int M = json["M"].asInt();
 			return std::make_shared<vecodex::Index<
 				baseline::FaissIndex<faiss::IndexHNSWFlat, IDType>>>(
-				dim, threshold, std::nullopt, dim, M, metric_type);
+				dim, threshold, dim, M, metric_type);
 		} else {
 			throw std::runtime_error("Doesn't support index type " + type);
 		}

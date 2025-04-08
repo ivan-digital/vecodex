@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "IBaseIndex.h"
 namespace vecodex {
 template <typename IDType>
 class ISegment {
@@ -16,6 +17,13 @@ class ISegment {
 
 	virtual size_t getID() const = 0;
 
+	virtual std::shared_ptr<IBaseIndex<IDType>> getIndex() = 0;
+
+	virtual void mergeSegment(
+		const std::shared_ptr<ISegment<IDType>>& other) = 0;
+
 	virtual void serialize(const std::string& filename) const = 0;
+
+	virtual size_t size() const = 0;
 };
 }  // namespace vecodex

@@ -21,23 +21,17 @@ class Index final : public IIndex<typename IndexType::ID> {
 		std::vector<std::shared_ptr<const ISegment<IDType>>>&&)>;
 
 	template <typename... ArgTypes>
-	Index(int dim, int segmentThreshold,
-		  std::optional<UpdateCallback> update_callback, ArgTypes... args)
+	Index(int dim, int segmentThreshold, ArgTypes... args)
 		: d_(dim),
 		  segmentThreshold_(segmentThreshold),
 		  factory_(std::make_shared<SegmentFactory<IndexType, ArgTypes...>>(
-			  std::forward_as_tuple(args...))),
-		  update_callback_(update_callback) {
+			  std::forward_as_tuple(args...))) {
 		segments_.push_back(std::move(factory_->create()));
 	}
 
 	Index(int dim, int segmentThreshold,
-		  std::optional<UpdateCallback> update_callback,
 		  const std::shared_ptr<SegmentFactoryBase<IndexType>>& factory)
-		: d_(dim),
-		  segmentThreshold_(segmentThreshold),
-		  factory_(factory),
-		  update_callback_(update_callback) {
+		: d_(dim), segmentThreshold_(segmentThreshold), factory_(factory) {
 		segments_.push_back(std::move(factory_->create()));
 	}
 
@@ -113,19 +107,19 @@ class Index final : public IIndex<typename IndexType::ID> {
 		}
 	}
 
-	void pushSegment(const std::shared_ptr<Segment<IndexType>>& segment) {
+	void pushSegment(
+		const std::shared_ptr<ISegment<IDType>>& segment) override {
 		segments_.push_back(segment);
 		if (update_callback_.has_value()) {
 			update_callback_.value()({}, {segment});
 		}
 	}
 
-	bool eraseSegment(size_t id) {
-		auto erase_it =
-			std::find(segments_.begin(), segments_.end(),
-					  [&](const std::shared_ptr<Segment<IndexType>>& segment) {
-						  return segment->getID() == id;
-					  });
+	bool eraseSegment(size_t id) override {
+		auto erase_it = std::find_if(
+			segments_.begin(), segments_.end(),
+			[&](const std::shared_ptr<const ISegment<IDType>>& segment)
+				-> bool { return (segment->getID() == id); });
 		if (erase_it == segments_.end()) {
 			return false;
 		}
@@ -133,11 +127,15 @@ class Index final : public IIndex<typename IndexType::ID> {
 	}
 	size_t size() const { return segments_.size(); }
 
+	void setUpdateCallback(UpdateCallback&& callback) override {
+		update_callback_ = std::move(callback);
+	}
+
    private:
 	int d_;
 	size_t segmentThreshold_;
 	std::shared_ptr<SegmentFactoryBase<IndexType>> factory_;
-	std::deque<std::shared_ptr<Segment<IndexType>>> segments_;
+	std::deque<std::shared_ptr<ISegment<IDType>>> segments_;
 	std::optional<UpdateCallback> update_callback_ = std::nullopt;
 };
 }  // namespace vecodex

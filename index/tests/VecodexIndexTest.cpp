@@ -72,7 +72,7 @@ bool check_meta(const std::vector<IDType>& out_meta,
 TEST(VecodexIndexTest, AddAndSearchVector) {
 
 	// Initialize index with 2 dimensions and segment threshold of 5
-	IndexHNSWType index(2, 3, std::nullopt, 2, 2, faiss::MetricType::METRIC_L2);
+	IndexHNSWType index(2, 3, 2, 2, faiss::MetricType::METRIC_L2);
 
 	// Add some vectors
 	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
@@ -87,7 +87,7 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
 }
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Initialize index with 2 dimensions and segment threshold of 3
-	IndexFlatType index(2, 3, std::nullopt, 2, faiss::MetricType::METRIC_L2);
+	IndexFlatType index(2, 3, 2, faiss::MetricType::METRIC_L2);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -104,7 +104,7 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 
 TEST(VecodexIndexTest, MergeSegments) {
 	// Initialize index with 2 dimensions and segment threshold of 2
-	IndexFlatType index(2, 2, std::nullopt, 2, faiss::MetricType::METRIC_L2);
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -122,7 +122,7 @@ TEST(VecodexIndexTest, MergeSegments) {
 }
 
 TEST(VecodexIndexTest, Search) {
-	IndexHNSWType index(2, 2, std::nullopt, 2, 2, faiss::MetricType::METRIC_L2);
+	IndexHNSWType index(2, 2, 2, 2, faiss::MetricType::METRIC_L2);
 
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
@@ -136,7 +136,7 @@ TEST(VecodexIndexTest, Search) {
 }
 
 TEST(VecodexIndexTest, Delete) {
-	IndexHNSWType index(2, 2, std::nullopt, 2, 2, faiss::MetricType::METRIC_L2);
+	IndexHNSWType index(2, 2, 2, 2, faiss::MetricType::METRIC_L2);
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
 	vectors[2] = vectors[3] = 2.0f;
@@ -155,7 +155,8 @@ TEST(VecodexIndexTest, Delete) {
 }
 
 TEST(VecodexIndexTest, UpdateCallback) {
-	IndexFlatType index(2, 2, update_callback, 2, faiss::MetricType::METRIC_L2);
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
+	index.setUpdateCallback(update_callback);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -170,8 +171,8 @@ TEST(VecodexIndexTest, UpdateCallback) {
 }
 
 TEST(VecodexIndexTest, Serialize) {
-	IndexFlatType index(2, 2, serialize_callback, 2,
-						faiss::MetricType::METRIC_L2);
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
+	index.setUpdateCallback(serialize_callback);
 	float vectors[4][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4"};
@@ -179,8 +180,8 @@ TEST(VecodexIndexTest, Serialize) {
 	index.add(ids.size(), ids.data(), (float*)vectors);
 	index.mergeSegments(index.size());
 
-	IndexFlatType index_copy(2, 2, serialize_callback, 2,
-							 faiss::MetricType::METRIC_L2);
+	IndexFlatType index_copy(2, 2, 2, faiss::MetricType::METRIC_L2);
+	index_copy.setUpdateCallback(serialize_callback);
 	for (auto&& filename : serialization) {
 		FILE* fd = std::fopen(filename.c_str(), "r");
 		auto new_segment = std::make_shared<SegmentFLatType>(fd);
@@ -197,7 +198,7 @@ TEST(VecodexIndexTest, Serialize) {
 }
 
 TEST(VecodexIndexTest, IIndex) {
-	IndexFlatType index(2, 2, std::nullopt, 2, faiss::MetricType::METRIC_L2);
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
 	vecodex::IIndex<std::string>* base_index =
 		(vecodex::IIndex<std::string>*)&index;
 
@@ -225,11 +226,10 @@ TEST(VecodexIndexTest, JsonParser) {
 TEST(VecodexIndexTest, Basic) {
 	const size_t dim = 100;
 	const size_t threshold = 1000;
-	IndexHNSWType index_hnsw(dim, threshold, std::nullopt, dim, 2,
+	IndexHNSWType index_hnsw(dim, threshold, dim, 2,
 							 faiss::MetricType::METRIC_L2);
 
-	IndexFlatType index_flat(dim, threshold, std::nullopt, dim,
-							 faiss::MetricType::METRIC_L2);
+	IndexFlatType index_flat(dim, threshold, dim, faiss::MetricType::METRIC_L2);
 	const size_t vec_num = 3;
 	const float max_num = 10;
 	const int k = 3;

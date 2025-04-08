@@ -53,10 +53,10 @@ class Segment final : public vecodex::ISegment<typename IndexType::ID> {
 		return result;
 	}
 
-	void mergeSegment(const std::shared_ptr<Segment>& other) {
+	void mergeSegment(const std::shared_ptr<ISegment<IDType>>& other) override {
 		index_->merge_from_other(std::move(other->getIndex()));
 	}
-	std::shared_ptr<IBaseIndex<IDType>> getIndex() { return index_; }
+	std::shared_ptr<IBaseIndex<IDType>> getIndex() override { return index_; }
 
 	void serialize(const std::string& filename) const override {
 		FILE* fd = std::fopen(filename.c_str(), "w");
@@ -65,7 +65,7 @@ class Segment final : public vecodex::ISegment<typename IndexType::ID> {
 		std::fclose(fd);
 	}
 
-	size_t size() const { return index_->size(); }
+	size_t size() const override { return index_->size(); }
 	size_t getID() const override { return seg_id_; }
 
    private:
