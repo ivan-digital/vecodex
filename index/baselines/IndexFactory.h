@@ -1,7 +1,11 @@
-#include <json/json.h>
+#pragma once
+#include <nlohmann/json.hpp>
 #include <algorithm>
 #include "Index.h"
 #include "faiss.h"
+
+using Json = nlohmann::json;
+
 namespace vecodex {
 static const std::string faissFlat = "faissFlat";
 static const std::string faissHNSWFlat = "faissHNSWFlat";
@@ -12,12 +16,12 @@ static const std::unordered_map<std::string, faiss::MetricType>
 		{"Linf", faiss::MetricType::METRIC_Linf},
 };
 template <typename IDType>
-std::shared_ptr<vecodex::IIndex<IDType>> CreateIndex(const Json::Value& json) {
-	std::string type = json["type"].asString();
-	std::string lib = json["library"].asString();
-	int dim = json["dim"].asInt();
-	int threshold = json["threshold"].asInt();
-	std::string metric = json["metric"].asString();
+std::shared_ptr<vecodex::IIndex<IDType>> CreateIndex(const Json& json) {
+	std::string type = json["type"].get<std::string>();
+	std::string lib = json["library"].get<std::string>();
+	int dim = json["dim"].get<int>();
+	int threshold = json["threshold"].get<int>();
+	std::string metric = json["metric"].get<std::string>();
 	if (lib == "faiss") {
 		faiss::MetricType metric_type = faiss_metric_map.at(metric);
 		if (type == faissFlat) {
@@ -25,7 +29,7 @@ std::shared_ptr<vecodex::IIndex<IDType>> CreateIndex(const Json::Value& json) {
 				vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, IDType>>>(
 				dim, threshold, std::nullopt, dim, metric_type);
 		} else if (type == faissHNSWFlat) {
-			int M = json["M"].asInt();
+			int M = json["M"].get<int>();
 			return std::make_shared<vecodex::Index<
 				baseline::FaissIndex<faiss::IndexHNSWFlat, IDType>>>(
 				dim, threshold, std::nullopt, dim, M, metric_type);

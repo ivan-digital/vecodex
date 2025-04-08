@@ -88,11 +88,14 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
-add_subdirectory(external/jsoncpp)
 # Google Test Integration
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
 endif()
+
+# Json
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 # Main Library Target
 add_library(vecodex-index INTERFACE)
@@ -107,12 +110,12 @@ target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baseli
 # Link Libraries to Main Library Target
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 add_executable(Benchmark tests/Benchmark.cpp)
 target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 
-target_link_libraries(Benchmark PRIVATE jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(Benchmark PRIVATE nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
