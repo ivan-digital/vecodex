@@ -11,12 +11,11 @@ using service::SearchResponse;
 
 constexpr double RFF_CONST = 60;
 
-double GetScore(size_t id) {
+inline double GetScore(size_t id) {
     return 1. / (RFF_CONST + static_cast<double>(id) + 1);
 }
 
-SearchResponse MergeSearcherAnswers(
-    const std::vector<SearchResponse>& responses, const size_t num_requested) {
+inline SearchResponse MergeSearcherAnswers(const std::vector<SearchResponse>& responses, const size_t num_requested) {
     
     std::unordered_map<std::string_view, double> doc_to_score;
 
