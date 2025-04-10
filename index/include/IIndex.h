@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <functional>
 #include "ISegment.h"
 namespace vecodex {
 template <typename IDType>
