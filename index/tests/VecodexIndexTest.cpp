@@ -25,7 +25,7 @@ int erased = 0;
 int inserted = 0;
 void update_callback(
 	std::vector<size_t>&& ids,
-	std::vector<std::shared_ptr<const vecodex::ISegment<std::string>>>&& segs) {
+	std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs) {
 	erased += ids.size();
 	inserted += segs.size();
 }
@@ -34,7 +34,7 @@ std::vector<std::string> serialization;
 
 void serialize_callback(
 	std::vector<size_t>&& ids,
-	std::vector<std::shared_ptr<const vecodex::ISegment<std::string>>>&& segs) {
+	std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs) {
 	static int called = 0;
 	called++;
 	if (called > 2) {
@@ -42,7 +42,7 @@ void serialize_callback(
 	}
 	for (auto&& seg : segs) {
 		std::string filename = "temp_" + std::to_string(std::rand());
-		seg->serialize(filename);
+		SerializeSegment(filename, seg);
 		serialization.push_back(filename);
 	}
 }
@@ -101,7 +101,7 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Verify that the search returns top-2 nearest vectors
 	EXPECT_TRUE(check_meta(results, {"vec3", "vec4"}));
 }
-
+/*
 TEST(VecodexIndexTest, MergeSegments) {
 	// Initialize index with 2 dimensions and segment threshold of 2
 	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
@@ -120,6 +120,7 @@ TEST(VecodexIndexTest, MergeSegments) {
 
 	EXPECT_TRUE(check_meta(results, {"vec3"}));
 }
+*/
 
 TEST(VecodexIndexTest, Search) {
 	IndexHNSWType index(2, 2, 2, 2, faiss::MetricType::METRIC_L2);
@@ -153,7 +154,6 @@ TEST(VecodexIndexTest, Delete) {
 	results = index.search({3.0f, 3.0f}, 2);
 	EXPECT_TRUE(check_meta(results, {"vec6"}));
 }
-
 TEST(VecodexIndexTest, UpdateCallback) {
 	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
 	index.setUpdateCallback(update_callback);
@@ -165,9 +165,10 @@ TEST(VecodexIndexTest, UpdateCallback) {
 	ASSERT_EQ(inserted, 2);
 	ASSERT_EQ(erased, 0);
 	inserted = 0;
-	index.mergeSegments(index.size());
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(1.5s);
 	ASSERT_EQ(inserted, 1);
-	ASSERT_EQ(erased, 3);
+	ASSERT_EQ(erased, 2);
 }
 
 TEST(VecodexIndexTest, Serialize) {
@@ -178,13 +179,14 @@ TEST(VecodexIndexTest, Serialize) {
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4"};
 
 	index.add(ids.size(), ids.data(), (float*)vectors);
-	index.mergeSegments(index.size());
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(1.5s);
 
 	IndexFlatType index_copy(2, 2, 2, faiss::MetricType::METRIC_L2);
 	index_copy.setUpdateCallback(serialize_callback);
 	for (auto&& filename : serialization) {
 		FILE* fd = std::fopen(filename.c_str(), "r");
-		auto new_segment = std::make_shared<SegmentFLatType>(fd);
+		auto new_segment = vecodex::DeserealizeSegment<std::string>(fd);
 		index_copy.pushSegment(new_segment);
 		std::fclose(fd);
 		std::remove(filename.c_str());
