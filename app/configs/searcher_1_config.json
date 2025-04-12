@@ -8,5 +8,15 @@
         {
             "id": "0"
         }
+    ],
+    "shards": [
+        {
+            "shard_id": "0",
+            "index_id": "0"
+        },
+        {
+            "shard_id": "1",
+            "index_id": "0"
+        }
     ]
 }

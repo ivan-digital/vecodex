@@ -1,4 +1,6 @@
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <string>
 
 #include "Coordinator.h"
@@ -12,13 +14,20 @@
     
 CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr) 
     : etcd_client(EtcdClient(etcd_addr)) {
-    UpdateSearchersState();
+    UpdateSearchersState(nullptr);
 }
 
 grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
     std::cout << "Hello from Coordinator Server!" << std::endl;
     
-    UpdateSearchersState();
+    UpdateSearchersState(request);
+
+    auto index_id = request->index_id();
+    for (auto& [shard_id, searchers] : searchers_map[index_id]) {
+        for (auto& client : searchers) {
+            AskSingleSearcher(client, request);
+        }
+    }
 
     std::vector<SearchResponse> search_responses;
     search_responses.reserve(searcher_clients.size());
@@ -32,18 +41,36 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-void CoordinatorImpl::UpdateSearchersState() {
-    searcher_clients.clear();
-    auto searcher_hosts = etcd_client.ListSearcherHostsByIndexId("0");
-    for (const auto& host : searcher_hosts) {
-        std::cout << "Updated host " + host + "\n";
-        std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-        searcher_clients.emplace(host, SearcherClient(channel));
+void CoordinatorImpl::UpdateSearchersState(const SearchRequest* request) {
+    const auto& index_id = request->index_id();
+    std::optional<std::string> shard_id = std::nullopt;
+    
+    auto update_with_index_shard_info = [this](const std::string& index_id, const std::string& shard_id) {
+        auto hosts = etcd_client.ListSearcherHosts(index_id, shard_id);
+        searchers_map[index_id][shard_id] = {};
+        for (const auto& addr : hosts) {
+            searchers_map[index_id][shard_id].emplace_back(CreateSearcherClient(addr));
+        }
+    };
+
+    if (request->has_shard_id()) {
+        const auto& shard_id = request->shard_id();
+        update_with_index_shard_info(index_id, shard_id);
+    } else {
+        auto shards = etcd_client.ListShardIds(index_id);
+        for (const auto& shard_id : shards) {
+            update_with_index_shard_info(index_id, shard_id);
+        }
     }
 }
 
 SearchResponse CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const {
     return client.getProcessedDocuments(*request);
+}
+
+SearcherClient CoordinatorImpl::CreateSearcherClient(const std::string& addr) const {
+    std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+    return SearcherClient(channel);
 }
 
 

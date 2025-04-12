@@ -35,7 +35,10 @@ public:
             .help("...")
             .default_value("");
         program_.add_argument("--indexes")
-            .help("indexes in Json format: {\"id\": <id>, \"searcher_host\": <host>}")
+            .help("json with indexes and shards")
+            .default_value("");
+        program_.add_argument("--shards")
+            .help("searcher's shard info")
             .default_value("");
 
         Parse_(argc, argv);
@@ -62,6 +65,7 @@ private:
         const std::string etcd_addr = program_.get("--etcd-address");
         const std::string hostname = program_.get("--hostname");
         const std::string indexes = program_.get("--indexes");
+        const std::string shards = program_.get("--shards");
 
         result_ = ReadJsonConfig_(config_path);
 
@@ -71,6 +75,7 @@ private:
         result_["s3-host"] = s3_host == "" ? result_["s3-host"].template get<std::string>() : s3_host;
         result_["etcd_address"] = etcd_addr == "" ? result_["etcd_address"].template get<std::string>() : etcd_addr;
         result_["indexes"] = indexes == "" ? result_["indexes"] : json::parse(indexes);
+        result_["shards"] = shards == "" ? result_["shards"] : json::parse(shards);
 
         std::cout << "CONFIG:\n" << result_ << "\n";
     }

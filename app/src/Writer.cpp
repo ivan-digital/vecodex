@@ -90,7 +90,7 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
         }
     }
 
-    auto hosts = etcd_client.ListSearcherHostsByIndexId(index_id);
+    auto hosts = etcd_client.ListSearcherHosts(index_id);
     UpdateRequest request;
     request.mutable_added()->Assign(added.begin(), added.end());
     request.mutable_deleted()->Assign(deleted.begin(), deleted.end());
