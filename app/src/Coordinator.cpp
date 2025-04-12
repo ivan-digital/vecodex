@@ -6,7 +6,6 @@
 #include "Coordinator.h"
 #include "Merging.h"
 #include "SearcherClient.h"
-#include "service.pb.h"
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <vector>
@@ -23,18 +22,13 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     UpdateSearchersState(request);
 
     auto index_id = request->index_id();
+    std::vector<SearchResponse> search_responses;
+    size_t k = request->k();
+
     for (auto& [shard_id, searchers] : searchers_map[index_id]) {
         for (auto& client : searchers) {
-            AskSingleSearcher(client, request);
+            search_responses.emplace_back(std::move(AskSingleSearcher(client, request)));
         }
-    }
-
-    std::vector<SearchResponse> search_responses;
-    search_responses.reserve(searcher_clients.size());
-    size_t k = request->k();
-    for (auto& client: searcher_clients) {
-        search_responses.emplace_back(std::move(AskSingleSearcher(client.second, request)));
-        std::cout << "searcher #" + client.first + " returned:\n" << search_responses.back().DebugString() << "\n";
     }
     *response = MergeSearcherAnswers(search_responses, k);
 
