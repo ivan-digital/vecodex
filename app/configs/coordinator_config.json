@@ -6,12 +6,36 @@
     "s3-host": "http://minio:9000",
     "indexes": [
         {
-            "id": "0",
-            "host": "searcher_1:44400"
+            "index_id": "0",
+            "shards": [
+                {
+                    "shard_id": "0",
+                    "host": "searcher_1:44400" 
+                },
+                {
+                    "shard_id": "1",
+                    "host": "searcher_1:44400"
+                }
+            ],
+            "hosts": [
+                "searcher_1:44400"
+            ]
         },
         {
-            "id": "1",
-            "host": "searcher_2:44400"
+            "index_id": "1",
+            "shards": [
+                {
+                    "shard_id": "0",
+                    "host": "searcher_2:44400" 
+                },
+                {
+                    "shard_id": "1",
+                    "host": "searcher_2:44400"
+                }
+            ],
+            "hosts": [
+                "searcher_2:44400"
+            ]
         }
     ]
 }

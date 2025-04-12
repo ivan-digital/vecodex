@@ -2,6 +2,7 @@
 
 #include <grpc/grpc.h>
 #include <grpcpp/server_context.h>
+#include <string>
 #include <unordered_map>
 
 #include "service.pb.h"
@@ -22,12 +23,18 @@ public:
     grpc::Status ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) override;
 
 private:
+    using ShardToSearcher = std::unordered_map<std::string, std::vector<SearcherClient>>;
+
     SearchResponse AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const;
 
-    void UpdateSearchersState();
+    void UpdateSearchersState(const SearchRequest* request);
 
-    std::unordered_map<std::string, SearcherClient> searcher_clients;
+private:
+    std::unordered_map<std::string, ShardToSearcher> searchers_map; // index_id -> shard_id -> searcher_client 
     EtcdClient etcd_client;
+
+private:
+    SearcherClient CreateSearcherClient(const std::string& addr) const;
 };
 
 

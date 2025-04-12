@@ -11,6 +11,8 @@ message Document {
 message SearchRequest {
     repeated float vector_data = 1;
     int32 k = 2;
+    optional string index_id = 3;
+    optional string shard_id = 4;
 }
 
 message SearchResponse {

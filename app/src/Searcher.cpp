@@ -68,13 +68,11 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
 }
 
 void SearcherImpl::Init() {
-    etcd_client.AddSearcherHost(host + ":" + port);
-    etcd_client.AddSearcherHostByIndexId(index_id, host + ":" + port);
+    etcd_client.AddSearcherHost("0", "0", host + ":" + port);
 }
 
 void SearcherImpl::GracefulShutdown() {
-    etcd_client.RemoveSearcherHost(host + ":" + port);
-    etcd_client.RemoveSearcherHostByIndexId(index_id, host + ":" + port);
+    etcd_client.RemoveSearcherHost("0", "0",host + ":" + port);
 }
 
 

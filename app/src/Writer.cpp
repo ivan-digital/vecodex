@@ -105,7 +105,7 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
             }
         }
 
-        auto hosts = etcd_client.ListSearcherHostsByIndexId(index_id);
+        auto hosts = etcd_client.ListSearcherHosts(index_id);
         std::cout << "searcher hosts:\n";
         for (const auto& host : hosts) {
             std::cout << host << std::endl;
