@@ -41,7 +41,7 @@ void CoordinatorImpl::UpdateSearchersState(const SearchRequest* request) {
     
     auto update_with_index_shard_info = [this](const std::string& index_id, const std::string& shard_id) {
         auto hosts = etcd_client.ListSearcherHosts(index_id, shard_id);
-        searchers_map[index_id][shard_id] = {};
+        searchers_map[index_id][shard_id] = std::vector<SearcherClient>();
         for (const auto& addr : hosts) {
             searchers_map[index_id][shard_id].emplace_back(CreateSearcherClient(addr));
         }
