@@ -8,10 +8,17 @@
 #include "faiss/IndexFlat.h"
 #include "faiss/IndexHNSW.h"
 #include "faiss/index_io.h"
+#include "io.h"
 namespace baseline {
 template <class BaseIndex, typename IDType>
 class FaissIndex final : public vecodex::IBaseIndex<IDType> {
    public:
+	static int get_segment_type() {
+		if constexpr (std::is_same<BaseIndex, faiss::IndexFlat>::value) {
+			return vecodex::SegmentType::kFaissFlat;
+		}
+		return vecodex::SegmentType::kFaissHNSW;
+	}
 	using ID = IDType;
 	template <typename... Args>
 	FaissIndex(Args... args) : index_(std::make_shared<BaseIndex>(args...)) {}
@@ -146,27 +153,6 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 	IDType getID(faiss::idx_t idx) const { return inv_ids_.at(idx); }
 
    private:
-	template <typename T>
-	static void writeBinary(FILE* fd, T value) {
-		if constexpr (std::is_same_v<T, std::string>) {
-			size_t sz = value.size();
-			std::fwrite(&sz, sizeof(sz), 1, fd);
-			std::fwrite(value.data(), sizeof(value[0]), sz, fd);
-			return;
-		}
-		std::fwrite(&value, sizeof(value), 1, fd);
-	}
-	template <typename T>
-	static void readBinary(FILE* fd, T& value) {
-		if constexpr (std::is_same_v<T, std::string>) {
-			size_t sz = 0;
-			std::fread(&sz, sizeof(sz), 1, fd);
-			value.resize(sz);
-			std::fread(value.data(), sizeof(value[0]), sz, fd);
-			return;
-		}
-		std::fread(&value, sizeof(value), 1, fd);
-	}
 	std::shared_ptr<BaseIndex> index_;
 	faiss::idx_t next_id = 0;
 	std::unordered_map<IDType, faiss::idx_t> ids_;
