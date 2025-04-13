@@ -66,7 +66,7 @@ Searcher::Searcher(const json& config)
     : BaseServer(config), 
     service(SearcherImpl(host, port, config["etcd_address"].template get_ref<const std::string&>(),
                                      config["s3-host"].template get_ref<const std::string&>(),
-                           			 config["indexes"][0]["id"].template get_ref<const std::string&>())) {}
+                           			 config["indexes"][0]["index_id"].template get_ref<const std::string&>())) {}
 
 void Searcher::Run() {
     InternalRun(service);
