@@ -6,11 +6,6 @@
     "s3-host": "http://minio:9000",
     "indexes": [
         {
-            "id": "0"
-        }
-    ],
-    "shards": [
-        {
             "shard_id": "0",
             "index_id": "0"
         },
