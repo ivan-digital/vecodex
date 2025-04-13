@@ -12,6 +12,7 @@
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
+#include <boost/chrono.hpp>
 
 using SegmentHNSWType =
 	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
@@ -166,7 +167,7 @@ TEST(VecodexIndexTest, UpdateCallback) {
 	ASSERT_EQ(erased, 0);
 	inserted = 0;
 	using namespace std::chrono_literals;
-	std::this_thread::sleep_for(1.5s);
+	std::this_thread::sleep_for(2s);
 	ASSERT_EQ(inserted, 1);
 	ASSERT_EQ(erased, 2);
 }

@@ -40,7 +40,9 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake libomp-dev libopenblas-dev libgtest-dev libgflags-dev libboost-all-dev
+        sudo apt-get install -y build-essential cmake libomp-dev libopenblas-dev libgtest-dev libgflags-dev libboost-all-dev clang clang++
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
 
     - name: Configure CMake
       run: |

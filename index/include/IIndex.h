@@ -2,6 +2,8 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/future.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/chrono.hpp>
 #include <exception>
 #include <functional>
 #include <shared_mutex>
