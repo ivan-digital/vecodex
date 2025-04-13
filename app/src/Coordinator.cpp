@@ -13,7 +13,6 @@
     
 CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr) 
     : etcd_client(EtcdClient(etcd_addr)) {
-    UpdateSearchersState(nullptr);
 }
 
 grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
@@ -37,8 +36,7 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
 
 void CoordinatorImpl::UpdateSearchersState(const SearchRequest* request) {
     const auto& index_id = request->index_id();
-    std::optional<std::string> shard_id = std::nullopt;
-    
+
     auto update_with_index_shard_info = [this](const std::string& index_id, const std::string& shard_id) {
         auto hosts = etcd_client.ListSearcherHosts(index_id, shard_id);
         searchers_map[index_id][shard_id] = std::vector<SearcherClient>();
