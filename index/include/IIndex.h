@@ -23,7 +23,7 @@ class IIndex {
 		merging_thread_ = std::make_shared<std::thread>([&]() {
 			while (!storage_.stopped.load()) {
 				storage_.merge(100);
-				std::this_thread::sleep_for(1s);
+				// std::this_thread::sleep_for(1s);
 			}
 		});
 	}

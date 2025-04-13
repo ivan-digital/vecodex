@@ -167,7 +167,7 @@ TEST(VecodexIndexTest, UpdateCallback) {
 	ASSERT_EQ(erased, 0);
 	inserted = 0;
 	using namespace std::chrono_literals;
-	std::this_thread::sleep_for(2s);
+	// std::this_thread::sleep_for(2s);
 	ASSERT_EQ(inserted, 1);
 	ASSERT_EQ(erased, 2);
 }
@@ -181,7 +181,7 @@ TEST(VecodexIndexTest, Serialize) {
 
 	index.add(ids.size(), ids.data(), (float*)vectors);
 	using namespace std::chrono_literals;
-	std::this_thread::sleep_for(1.5s);
+	// std::this_thread::sleep_for(1.5s);
 
 	IndexFlatType index_copy(2, 2, 2, faiss::MetricType::METRIC_L2);
 	index_copy.setUpdateCallback(serialize_callback);
