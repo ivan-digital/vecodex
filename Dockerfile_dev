@@ -9,7 +9,10 @@ RUN apt-get update && \
     libssl-dev \
     libcpprest-dev \
     libc++-dev
-RUN apt-get install -y libboost-dev
+RUN apt-get install -y libboost-dev \
+    libboost-thread-dev \
+    libboost-timer-dev \
+    libboost-chrono-dev
 RUN apt-get install -y libomp-dev \
     libopenblas-dev \
     libgtest-dev \
