@@ -12,13 +12,9 @@ SearcherImpl::~SearcherImpl() {
 
 grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
     std::cout << "Hello from Searcher Server!" << std::endl;
-    
-    std::vector<float> data = {42., -42.};
-    service::Document doc;
-    doc.mutable_vector_data()->Assign(data.begin(), data.end());
 
-    auto new_document = response->add_result();
-    *new_document = doc;
+    auto new_document = response->add_ids();
+    *new_document = "message";
 
     return grpc::Status::OK;
 }

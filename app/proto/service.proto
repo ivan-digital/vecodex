@@ -4,20 +4,17 @@ package service;
 
 message Document {
     repeated float vector_data = 1;
-    optional int32 id = 2;
-    // what else should be here ?
+    string id = 2;
+    map<string, string> attributes = 3;
 }
 
 message SearchRequest {
-    optional Document data = 1;
-    optional int32 index_id = 2;
-    // what else should be here ?
+    repeated float vector_data = 1;
+    optional int32 k = 2;
 }
 
 message SearchResponse {
-    repeated Document result = 1;
-    repeated float scores = 2;
-    // what else should be here ?
+    repeated string ids  = 1;
 }
 
 service BaseService {
