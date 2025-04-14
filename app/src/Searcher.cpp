@@ -4,10 +4,12 @@
 #include <string>
 #include <memory>
 #include <cstdio>
-#include <optional>
 
-SearcherImpl::SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const std::string& index_id)
-    : host(host), port(port), etcd_client(EtcdClient(etcd_addr)), storage_client(s3_host), index(2, 3, std::nullopt, 2, 2, faiss::MetricType::METRIC_L2), index_id(index_id) {
+#include "IndexFactory.h"
+
+SearcherImpl::SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& index_json)
+    : host(host), port(port), etcd_client(EtcdClient(etcd_addr)), storage_client(s3_host),
+      index(vecodex::CreateIndex<std::string>(index_json)), index_id(index_json["id"].get<std::string>()) {
     Init();
     storage_client.logIn("user", "password"); // todo
 }
@@ -22,7 +24,7 @@ grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, co
     std::vector<float> query(request->vector_data().begin(), request->vector_data().end());
     int k = request->k();
 
-    std::vector<std::string> result = index.search(query, k);
+    std::vector<std::string> result = index->search(query, k);
 
     response->mutable_ids()->Assign(result.begin(), result.end());
     return grpc::Status::OK;
@@ -52,16 +54,15 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
   		}
 
         FILE* fd = std::fopen(segment_filename.c_str(), "r");
-        auto segment = std::make_shared<SegmentHNSWType>(fd);
-        index.pushSegment(segment);
+        auto segment = vecodex::DeserealizeSegment<std::string>(fd);
+        index->pushSegment(segment);
 
         std::fclose(fd);
         std::remove(segment_filename.c_str());
 	}
 
     for (size_t deleted_id : deleted) {
-      std::string segment_filename = std::to_string(deleted_id);
-      bool ok = storage_client.getObject(index_id, segment_filename);
+        index->eraseSegment(deleted_id);
     }
     return grpc::Status::OK;
 }
@@ -77,11 +78,11 @@ void SearcherImpl::GracefulShutdown() {
 }
 
 
-Searcher::Searcher(const json& config) 
-    : BaseServer(config), 
-    service(SearcherImpl(host, port, config["etcd_address"].template get_ref<const std::string&>(),
-                                     config["s3-host"].template get_ref<const std::string&>(),
-                           			 config["indexes"][0]["id"].template get_ref<const std::string&>())) {}
+Searcher::Searcher(const json& config)
+    : BaseServer(config),
+      service(SearcherImpl(host, port, config["etcd_address"].template get_ref<const std::string&>(),
+                                       config["s3-host"].template get_ref<const std::string&>(),
+                           			   config["indexes"][0])) {}
 
 void Searcher::Run() {
     InternalRun(service);
