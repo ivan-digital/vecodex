@@ -93,7 +93,7 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 
 	void merge_from_other(
 		std::shared_ptr<vecodex::IBaseIndex<IDType>> other) override {
-		FaissIndex* other_index = dynamic_cast<FaissIndex*>(other.get());
+		auto other_index = std::dynamic_pointer_cast<FaissIndex>(other);
 		if (other_index == nullptr) {
 			throw std::runtime_error("Couldn't cast index into FaissIndex");
 		}
@@ -107,7 +107,9 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 			ids.push_back(value);
 			idxs.push_back(key);
 		}
-		std::vector<float> vectors(idxs.size());
+		std::vector<float> vectors(idxs.size() * index_->d);
+		assert(ids.size() == idxs.size());
+
 		other_index->index_->reconstruct_batch(idxs.size(), idxs.data(),
 											   vectors.data());
 		add_batch(ids.size(), vectors.data(), ids.data());

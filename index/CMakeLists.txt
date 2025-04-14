@@ -75,7 +75,7 @@ endif()
 
 # Threading
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS thread)
+find_package(Boost REQUIRED thread timer chrono)
 
 # FAISS Configuration
 # Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables

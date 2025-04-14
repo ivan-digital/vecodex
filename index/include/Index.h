@@ -16,7 +16,9 @@ template <class IndexType>
 class Index final : public IIndex<typename IndexType::ID> {
    public:
 	using IDType = typename IndexType::ID;
-	using UpdateCallback = IIndex<IDType>::UpdateCallback;
+	using UpdateCallback =
+	std::function<void(std::vector<size_t>&&,
+					   std::vector<std::shared_ptr<ISegment<IDType>>>&&)>;
 
 	template <typename... ArgTypes>
 	Index(int dim, int segmentThreshold, ArgTypes... args)
@@ -63,7 +65,7 @@ class Index final : public IIndex<typename IndexType::ID> {
 				this->storage_.add(this->segments_[i]);
 			}
 		}
-		if (this->callback_) {
+		if (this->callback_ && !inserted.empty()) {
 			this->callback_.value()({}, std::move(inserted));
 		}
 	}

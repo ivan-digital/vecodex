@@ -9,7 +9,9 @@
 #include <shared_mutex>
 #include <string>
 #include <vector>
+#include <thread>
 #include "ISegment.h"
+#define _GLIBCXX_USE_NANOSLEEP
 namespace vecodex {
 template <typename IDType>
 class IIndex {
@@ -23,7 +25,7 @@ class IIndex {
 		merging_thread_ = std::make_shared<std::thread>([&]() {
 			while (!storage_.stopped.load()) {
 				storage_.merge(100);
-				// std::this_thread::sleep_for(1s);
+				std::this_thread::sleep_for(1s);
 			}
 		});
 	}
@@ -159,10 +161,13 @@ class IIndex {
 								segment) -> bool {
 							return (segment->getID() == id);
 						});
+					if (erase_it == this_index->segments_.end()) {
+						continue;
+					}
 					assert(erase_it != this_index->segments_.end());
 					this_index->segments_.erase(erase_it);
 				}
-				if (this_index->callback_.has_value()) {
+				if (this_index->callback_.has_value() && (!erased.empty() && !inserted.empty())) {
 					this_index->callback_.value()(std::move(erased),
 												  std::move(inserted));
 				}

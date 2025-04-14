@@ -1,5 +1,7 @@
 #include <iostream>
 #include <random>
+#include <chrono>
+#include <fstream>
 #include "Index.h"
 #include "faiss.h"
 
@@ -24,17 +26,22 @@ int main(int argc, char** argv) {
 	std::uniform_int_distribution<>(0, N);
 	std::uniform_int_distribution<> dis(0, N);
 	std::uniform_real_distribution<> dis_real(0.0, 10.0);
-	IndexFlatType flat_index(dim, 100, dim, faiss::MetricType::METRIC_L2);
-	IndexHNSWType hnsw_index(dim, 100, dim, 32, faiss::MetricType::METRIC_L2);
+	IndexFlatType flat_index(dim, 20, dim, faiss::MetricType::METRIC_L2);
+	IndexHNSWType hnsw_index(dim, 20, dim, 32, faiss::MetricType::METRIC_L2);
+
 
 	int added = 0;
 	int queried = 0;
+	std::ofstream flat_stat("flat_stat.csv");
+	std::ofstream hnsw_stat("hnsw_stat.csv");
+	flat_stat << "stat\n";
+	hnsw_stat << "stat\n";
 	while (added < N) {
+		std::cout << added << " " << N << "\n";
 		int n = dis(gen) % (N - added + 1);
 		int q = dis(gen) % (Q - queried + 1);
 		float* add_vectors = new float[n * dim];
 		std::string* ids = new std::string[n];
-		float* query_vector = new float[dim];
 		for (int i = 0; i < n * dim; ++i) {
 			add_vectors[i] = dis_real(gen);
 		}
@@ -43,19 +50,43 @@ int main(int argc, char** argv) {
 				ids[i].push_back(characters[dis(gen) % characters.size()]);
 			}
 		}
+
+		auto start = std::chrono::high_resolution_clock::now();
+		flat_index.add(n, ids, add_vectors);
+		auto finish = std::chrono::high_resolution_clock::now();
+		flat_stat << std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count() << "\n";
+		start = std::chrono::high_resolution_clock::now();
+		hnsw_index.add(n, ids, add_vectors);
+		finish = std::chrono::high_resolution_clock::now();
+		hnsw_stat << std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count() << "\n";
+		added++;
+		delete[] ids;
+		delete[] add_vectors;
+	}
+	flat_stat.close();
+	hnsw_stat.close();
+	flat_stat.open("flat_srch.csv");
+	hnsw_stat.open("hnsw_srch.csv");
+	flat_stat << "stat\n";
+	hnsw_stat << "stat\n";
+	std::cout << "OK\n";
+	while (queried < Q) {
+		std::cout << queried << " " << Q << "\n";
+		queried++;
+		int q = dis(gen) % (Q - queried + 1);
+		std::vector<float> query_vector(dim);
 		for (int i = 0; i < dim; ++i) {
 			query_vector[i] = dis_real(gen);
 		}
-		float* flat_ans = new float[k * dim];
-		float* hnsw_ans = new float[k * dim];
 
-		flat_index.add(n, ids, add_vectors);
-		hnsw_index.add(n, ids, add_vectors);
+		auto start = std::chrono::high_resolution_clock::now();
+		auto ans_flat = flat_index.search(query_vector, k);
+		auto finish = std::chrono::high_resolution_clock::now();
+		flat_stat << std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count() << "\n";
 
-		delete[] ids;
-		delete[] add_vectors;
-		delete[] query_vector;
-		delete[] flat_ans;
-		delete[] hnsw_ans;
+		start = std::chrono::high_resolution_clock::now();
+		auto ans_hnsw = hnsw_index.search(query_vector, k);
+		finish = std::chrono::high_resolution_clock::now();
+		hnsw_stat << std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count() << "\n";
 	}
 }

@@ -11,7 +11,8 @@ enum SegmentType { kFaissFlat = 0, kFaissHNSW };
 template <typename IDType>
 class ISegment {
    public:
-	ISegment(int seg_type_) : seg_type(seg_type_) {}
+	ISegment(int seg_type_) : seg_type(seg_type_) {
+	}
 
 	virtual void addVectorBatch(size_t n, const IDType* ids,
 								const float* vectors) = 0;
