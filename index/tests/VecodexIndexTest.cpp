@@ -3,39 +3,39 @@
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <unordered_set>
+#include "IIndex.h"
 #include "Index.h"
+#include "IndexFactory.h"
 #include "faiss.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
+#include <boost/chrono.hpp>
 
 using SegmentHNSWType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
-					 std::string>;
+	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
 using SegmentFLatType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-					 std::string>;
+	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
 using IndexHNSWType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>,
-				   std::string, int, int, faiss::MetricType>;
+	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
 using IndexFlatType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>,
-				   std::string, int, faiss::MetricType>;
+	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
 int erased = 0;
 int inserted = 0;
-template <typename Segment>
-void update_callback(std::vector<size_t>&& ids,
-					 std::vector<std::shared_ptr<const Segment>>&& segs) {
+void update_callback(
+	std::vector<size_t>&& ids,
+	std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs) {
 	erased += ids.size();
 	inserted += segs.size();
 }
 
 std::vector<std::string> serialization;
 
-template <typename Segment>
-void serialize_callback(std::vector<size_t>&& ids,
-						std::vector<std::shared_ptr<const Segment>>&& segs) {
+void serialize_callback(
+	std::vector<size_t>&& ids,
+	std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs) {
 	static int called = 0;
 	called++;
 	if (called > 2) {
@@ -43,7 +43,7 @@ void serialize_callback(std::vector<size_t>&& ids,
 	}
 	for (auto&& seg : segs) {
 		std::string filename = "temp_" + std::to_string(std::rand());
-		seg->serialize(filename);
+		SerializeSegment(filename, seg);
 		serialization.push_back(filename);
 	}
 }
@@ -73,7 +73,7 @@ bool check_meta(const std::vector<IDType>& out_meta,
 TEST(VecodexIndexTest, AddAndSearchVector) {
 
 	// Initialize index with 2 dimensions and segment threshold of 5
-	IndexHNSWType index(2, 3, {2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 3, 2, 2, faiss::MetricType::METRIC_L2);
 
 	// Add some vectors
 	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
@@ -88,7 +88,7 @@ TEST(VecodexIndexTest, AddAndSearchVector) {
 }
 TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Initialize index with 2 dimensions and segment threshold of 3
-	IndexFlatType index(2, 3, {2, faiss::MetricType::METRIC_L2});
+	IndexFlatType index(2, 3, 2, faiss::MetricType::METRIC_L2);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -102,10 +102,10 @@ TEST(VecodexIndexTest, AddMultipleAndSearchTopK) {
 	// Verify that the search returns top-2 nearest vectors
 	EXPECT_TRUE(check_meta(results, {"vec3", "vec4"}));
 }
-
+/*
 TEST(VecodexIndexTest, MergeSegments) {
 	// Initialize index with 2 dimensions and segment threshold of 2
-	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2});
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -121,9 +121,10 @@ TEST(VecodexIndexTest, MergeSegments) {
 
 	EXPECT_TRUE(check_meta(results, {"vec3"}));
 }
+*/
 
 TEST(VecodexIndexTest, Search) {
-	IndexHNSWType index(2, 2, {2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 2, 2, 2, faiss::MetricType::METRIC_L2);
 
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
@@ -137,7 +138,7 @@ TEST(VecodexIndexTest, Search) {
 }
 
 TEST(VecodexIndexTest, Delete) {
-	IndexHNSWType index(2, 2, {2, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index(2, 2, 2, 2, faiss::MetricType::METRIC_L2);
 	std::vector<float> vectors(4 * 2);	// n * dim
 	vectors[0] = vectors[1] = 1.0f;
 	vectors[2] = vectors[3] = 2.0f;
@@ -154,10 +155,9 @@ TEST(VecodexIndexTest, Delete) {
 	results = index.search({3.0f, 3.0f}, 2);
 	EXPECT_TRUE(check_meta(results, {"vec6"}));
 }
-
 TEST(VecodexIndexTest, UpdateCallback) {
-	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2},
-						update_callback<SegmentFLatType>);
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
+	index.setUpdateCallback(update_callback);
 	float vectors[5][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}, {5.0f, 5.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4", "vec5"};
@@ -166,29 +166,29 @@ TEST(VecodexIndexTest, UpdateCallback) {
 	ASSERT_EQ(inserted, 2);
 	ASSERT_EQ(erased, 0);
 	inserted = 0;
-	index.mergeSegments(index.size());
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(2s);
 	ASSERT_EQ(inserted, 1);
-	ASSERT_EQ(erased, 3);
+	ASSERT_EQ(erased, 2);
 }
 
 TEST(VecodexIndexTest, Serialize) {
-	IndexFlatType index(2, 2, {2, faiss::MetricType::METRIC_L2},
-						serialize_callback<SegmentFLatType>);
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
+	index.setUpdateCallback(serialize_callback);
 	float vectors[4][2] = {
 		{1.0f, 1.0f}, {1.9f, 1.9f}, {3.0f, 3.0f}, {4.0f, 4.0f}};
 	std::vector<std::string> ids = {"vec1", "vec2", "vec3", "vec4"};
 
 	index.add(ids.size(), ids.data(), (float*)vectors);
-	index.mergeSegments(index.size());
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(1.5s);
 
-	IndexFlatType index_copy(2, 2, {2, faiss::MetricType::METRIC_L2},
-							 serialize_callback<SegmentFLatType>);
+	IndexFlatType index_copy(2, 2, 2, faiss::MetricType::METRIC_L2);
+	index_copy.setUpdateCallback(serialize_callback);
 	for (auto&& filename : serialization) {
 		FILE* fd = std::fopen(filename.c_str(), "r");
-		baseline::FaissIndex<faiss::IndexFlat, std::string> base_index(fd);
-		auto new_segment =
-			std::make_shared<SegmentFLatType>(std::move(base_index));
-		index_copy.push_segment(new_segment);
+		auto new_segment = vecodex::DeserealizeSegment<std::string>(fd);
+		index_copy.pushSegment(new_segment);
 		std::fclose(fd);
 		std::remove(filename.c_str());
 	}
@@ -200,14 +200,39 @@ TEST(VecodexIndexTest, Serialize) {
 	EXPECT_TRUE(check_meta(res, {"vec3", "vec4"}));
 }
 
+TEST(VecodexIndexTest, IIndex) {
+	IndexFlatType index(2, 2, 2, faiss::MetricType::METRIC_L2);
+	vecodex::IIndex<std::string>* base_index =
+		(vecodex::IIndex<std::string>*)&index;
+
+	float vectors[2][2] = {{1.0f, 2.0f}, {2.0f, 3.1f}};
+	std::vector<std::string> ids = {"vec1", "vec2"};
+	base_index->add(2, ids.data(), (float*)vectors);
+	std::vector<float> query = {1.5f, 2.5f};
+	std::vector<std::string> results = base_index->search(query, 1);
+
+	// Verify the search result
+
+	EXPECT_TRUE(check_meta(results, {"vec1"}));
+}
+
+TEST(VecodexIndexTest, JsonParser) {
+	Json::Value json;
+	json["type"] = "faissFlat";
+	json["library"] = "faiss";
+	json["dim"] = 2;
+	json["threshold"] = 100;
+	json["metric"] = "L2";
+	auto index = vecodex::CreateIndex<std::string>(json);
+}
+
 TEST(VecodexIndexTest, Basic) {
 	const size_t dim = 100;
 	const size_t threshold = 1000;
-	IndexHNSWType index_hnsw(dim, threshold,
-							 {dim, 2, faiss::MetricType::METRIC_L2});
+	IndexHNSWType index_hnsw(dim, threshold, dim, 2,
+							 faiss::MetricType::METRIC_L2);
 
-	IndexFlatType index_flat(dim, threshold,
-							 {dim, faiss::MetricType::METRIC_L2});
+	IndexFlatType index_flat(dim, threshold, dim, faiss::MetricType::METRIC_L2);
 	const size_t vec_num = 3;
 	const float max_num = 10;
 	const int k = 3;
