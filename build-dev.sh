@@ -33,6 +33,7 @@ cmake -DBUILD_SHARED_LIBS=ON \
       -DRE2_BUILD_TESTING=OFF \
       -DBUILD_VECODEX_TESTS=ON \
       /app
+ldconfig
 make -j8 vecodex-app
 make -j8 vecodex_app_ut
 

@@ -142,6 +142,10 @@ add_executable(etcd_client ${PROJECT_SOURCE_DIR}/examples/etcd_client.cpp)
 target_link_libraries(etcd_client PRIVATE etcd-cpp-api)
 target_include_directories(etcd_client PRIVATE ${PROJECT_SOURCE_DIR}/external/etcd-cpp-apiv3)
 
+# Index
+add_subdirectory(../index ${PROJECT_BINARY_DIR}/index)
+target_link_libraries(${PROJECT_NAME} vecodex-index)
+
 if (BUILD_VECODEX_TESTS)
   set(TEST_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
   add_subdirectory(${TEST_DIRECTORY})

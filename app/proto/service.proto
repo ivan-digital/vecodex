@@ -14,9 +14,26 @@ message SearchRequest {
 }
 
 message SearchResponse {
-    repeated string ids  = 1;
+    repeated string ids = 1;
+}
+
+message WriteRequest {
+    Document data = 1;
+}
+
+message WriteResponse {
+}
+
+message UpdateRequest {
+    repeated uint64 added = 1; // segments' ids
+    repeated uint64 deleted = 2; // segments' ids
+}
+
+message UpdateResponse {
 }
 
 service BaseService {
     rpc ProcessSearchRequest (SearchRequest) returns (SearchResponse) {}
+    rpc ProcessWriteRequest (WriteRequest) returns (WriteResponse) {}
+    rpc ProcessUpdateRequest (UpdateRequest) returns (UpdateResponse) {}
 }

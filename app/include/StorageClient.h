@@ -14,13 +14,18 @@ public:
 
     ~StorageClient();
 
-    void logIn(const std::string& login, const std::string& password);
+    bool logIn(const std::string& login, const std::string& password);
 
     bool putObject(const std::string& bucket_name, const std::string& filename);
 
     bool getObject(const std::string& bucket_name, const std::string& filename);
 
     bool delObject(const std::string& bucket_name, const std::string& filename);
+
+    bool createBucket(const std::string& bucket_name);
+
+private:
+    std::string makeBucketName(const std::string& bucket_name) const;
 
 private:
     Aws::SDKOptions options;

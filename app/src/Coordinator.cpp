@@ -23,12 +23,12 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     std::vector<SearchResponse> search_responses;
     search_responses.reserve(searcher_clients.size());
     size_t k = request->k();
-    for (auto& client: searcher_clients) { 
+    for (auto& client: searcher_clients) {
         search_responses.emplace_back(std::move(AskSingleSearcher(client.second, request)));
         std::cout << "searcher #" + client.first + " returned:\n" << search_responses.back().DebugString() << "\n";
     }
     *response = MergeSearcherAnswers(search_responses, k);
-    
+
     return grpc::Status::OK;
 }
 

@@ -17,7 +17,7 @@ public:
             .default_value("");
         program_.add_argument("--hostname")
             .help("...")
-            .default_value("localhost");
+            .default_value("");
         program_.add_argument("--listening-port")
             .help("...")
             .default_value("");
@@ -25,7 +25,8 @@ public:
             .help("...")
             .default_value("");
         program_.add_argument("--s3-host")
-            .help("...");
+            .help("...")
+            .default_value("");
         program_.add_argument("--searcher-hosts")
             .help("...")
             .nargs(argparse::nargs_pattern::any)
@@ -57,6 +58,7 @@ private:
         const std::string config_path = program_.get("--config-path");
         const std::string output_port = program_.get("--output-port");
         const std::string listening_port = program_.get("--listening-port");
+        const std::string s3_host = program_.get("--s3-host");
         const std::string etcd_addr = program_.get("--etcd-address");
         const std::string hostname = program_.get("--hostname");
         const std::string indexes = program_.get("--indexes");
@@ -66,6 +68,7 @@ private:
         result_["mode"] = mode == "" ? result_["mode"].template get<std::string>() : mode;
         result_["hostname"] = hostname == "" ? result_["hostname"].template get<std::string>() : hostname;
         result_["port"] = listening_port == "" ? result_["port"].template get<std::string>() : listening_port;
+        result_["s3-host"] = s3_host == "" ? result_["s3-host"].template get<std::string>() : s3_host;
         result_["etcd_address"] = etcd_addr == "" ? result_["etcd_address"].template get<std::string>() : etcd_addr;
         result_["indexes"] = indexes == "" ? result_["indexes"] : json::parse(indexes);
 
