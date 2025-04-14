@@ -75,6 +75,7 @@ endif()
 
 # Threading
 find_package(Threads REQUIRED)
+find_package(Boost REQUIRED thread timer chrono)
 
 # FAISS Configuration
 # Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables
@@ -110,12 +111,12 @@ target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baseli
 # Link Libraries to Main Library Target
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 add_executable(Benchmark tests/Benchmark.cpp)
 target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 
-target_link_libraries(Benchmark PRIVATE nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(Benchmark PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
