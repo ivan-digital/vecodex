@@ -4,8 +4,6 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 
-#include <optional>
-#include <functional>
 #include <iostream>
 
 WriterImpl::WriterImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& indexes_config)
@@ -14,11 +12,13 @@ WriterImpl::WriterImpl(const std::string& host, const std::string& port, const s
 
     for (const auto& item : indexes_config) {
       	std::string id = item["id"].get<std::string>();
-        indexes[id] = std::make_shared<IndexHNSWType>(
-            2, 3,
-            std::bind(&WriterImpl::indexUpdateCallback, this, std::placeholders::_1, std::placeholders::_2, id),
-            2, 2, faiss::MetricType::METRIC_L2
-        );
+        indexes[id] = vecodex::CreateIndex<std::string>(item);
+
+        auto callback = [this, id](auto&& PH1, auto&& PH2) {
+            indexUpdateCallback(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), id);
+        };
+        indexes[id]->setUpdateCallback(callback);
+
         std::cout << "Created index " << id << std::endl;
         bool ok = storage_client.createBucket(id);
         if (!ok) {
@@ -64,7 +64,7 @@ WriterImpl::~WriterImpl() {
 }
 
 // todo: slow operation, consider using async
-void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs, const std::string& index_id) {
+void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs, const std::string& index_id) {
     std::cout << "Run callback\n";
     std::cout << "index id: " << index_id << std::endl;
     std::cout << "added:\n";
@@ -84,7 +84,7 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
       	size_t id = added_seg_ptr->getID();
       	std::string added_filename = std::to_string(id);
         added.push_back(id);
-        added_seg_ptr->serialize(added_filename);
+        vecodex::SerializeSegment<std::string>(added_filename, added_seg_ptr);
         bool ok = storage_client.putObject(index_id, added_filename);
         if (!ok) {
         	// todo

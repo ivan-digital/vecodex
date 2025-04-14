@@ -16,7 +16,9 @@ class Segment final : public ISegment<typename IndexType::ID> {
 	template <typename... Args>
 	Segment(Args... args)
 		: ISegment<IDType>(IndexType::get_segment_type()),
-		  index_(std::make_shared<IndexType>(args...)) {}
+		  index_(std::make_shared<IndexType>(args...)) {
+		this->seg_id = rand();
+	}
 
 	Segment(IndexType&& index)
 		: ISegment<IDType>(IndexType::get_segment_type()),

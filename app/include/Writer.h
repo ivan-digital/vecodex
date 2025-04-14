@@ -11,21 +11,9 @@
 #include <string>
 #include <unordered_map>
 
-#include "faiss.h"
-#include "Index.h"
-#include "Segment.h"
-
-#include "IBaseIndex.h"
-#include "IBaseSegment.h"
-
-using SegmentHNSWType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
-using SegmentFLatType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
-using IndexHNSWType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
-using IndexFlatType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
+#include "IIndex.h"
+#include "ISegment.h"
+#include "IndexFactory.h"
 
 using service::BaseService;
 using service::WriteRequest;
@@ -42,12 +30,12 @@ public:
     grpc::Status ProcessWriteRequest(grpc::ServerContext* context, const WriteRequest* request, WriteResponse* response) override;
 
 private:
-  	void indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<const SegmentHNSWType>>&& segs, const std::string& index_id);
+    void indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs, const std::string& index_id);
 
     std::string host;
     std::string port;
 
-    std::unordered_map<std::string, std::shared_ptr<IndexHNSWType>> indexes;
+    std::unordered_map<std::string, std::shared_ptr<vecodex::IIndex<std::string>>> indexes;
 
     EtcdClient etcd_client;
     StorageClient storage_client;

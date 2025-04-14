@@ -8,21 +8,9 @@
 #include "Base.h"
 #include "StorageClient.h"
 
-#include "faiss.h"
-#include "Index.h"
-#include "Segment.h"
-
-#include "IBaseIndex.h"
-#include "IBaseSegment.h"
-
-using SegmentHNSWType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
-using SegmentFLatType =
-	vecodex::Segment<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
-using IndexHNSWType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
-using IndexFlatType =
-	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
+#include "IIndex.h"
+#include "ISegment.h"
+#include "IndexFactory.h"
 
 using service::SearchRequest;
 using service::SearchResponse;
@@ -32,7 +20,7 @@ using service::BaseService;
 
 class SearcherImpl final : public BaseService::Service {
 public:
-    SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const std::string& index_id);
+    SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& index_json);
 
     ~SearcherImpl();
 
@@ -48,7 +36,7 @@ private:
     std::string port;
     EtcdClient etcd_client;
     StorageClient storage_client;
-    IndexHNSWType index;
+    std::shared_ptr<vecodex::IIndex<std::string>> index;
     std::string index_id;
 };
 
