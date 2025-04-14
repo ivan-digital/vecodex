@@ -34,13 +34,13 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         brew update
-        brew install gcc libomp openblas faiss googletest cmake gflags
+        brew install gcc libomp openblas faiss googletest cmake gflags boost
 
     - name: Install Dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake libomp-dev libopenblas-dev libgtest-dev libgflags-dev
+        sudo apt-get install -y build-essential cmake libomp-dev libopenblas-dev libgtest-dev libgflags-dev libboost-all-dev
 
     - name: Configure CMake
       run: |

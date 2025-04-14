@@ -31,9 +31,11 @@ cmake -DBUILD_SHARED_LIBS=ON \
       -DgRPC_BUILD_TESTS=OFF \
       -DCMAKE_INSTALL_PREFIX=/app \
       -DRE2_BUILD_TESTING=OFF \
+      -DBUILD_VECODEX_TESTS=ON \
       /app
 ldconfig
 make -j8 vecodex-app
+make -j8 vecodex_app_ut
 
 echo "$1"
 if [ "$1" = "coordinator" ]; then

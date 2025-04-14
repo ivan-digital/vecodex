@@ -6,22 +6,28 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "IBaseSegment.h"
+#include "IBaseIndex.h"
+#include "ISegment.h"
 namespace vecodex {
 template <class IndexType>
-class Segment final : public IndexType,
-					  public vecodex::IBaseSegment<typename IndexType::ID> {
+class Segment final : public ISegment<typename IndexType::ID> {
    public:
 	using IDType = typename IndexType::ID;
 	template <typename... Args>
-	Segment(Args... args) : IndexType(args...) {}
+	Segment(Args... args)
+		: ISegment<IDType>(IndexType::get_segment_type()),
+		  index_(std::make_shared<IndexType>(args...)) {}
 
-	Segment(IndexType&& index) : IndexType(std::move(index)) {
-		seg_id_ = rand();
+	Segment(IndexType&& index)
+		: ISegment<IDType>(IndexType::get_segment_type()),
+		  index_(std::move(index.index_)) {
+		this->seg_id = rand();
 	}
 
-	Segment(FILE* fd) : IndexType(fd) {
-		std::fread(&seg_id_, sizeof(seg_id_), 1, fd);
+	Segment(FILE* fd)
+		: ISegment<IDType>(IndexType::get_segment_type()),
+		  index_(std::make_shared<IndexType>(fd)) {
+		std::fread(&this->seg_id, sizeof(this->seg_id), 1, fd);
 	}
 
 	Segment(const Segment&) = default;
@@ -32,19 +38,21 @@ class Segment final : public IndexType,
 
 	void addVectorBatch(size_t n, const IDType* ids,
 						const float* vectors) override {
-		IndexType::add_batch(n, vectors, ids);
+		index_->add_batch(n, vectors, ids);
 	}
 
 	void deleteBatch(size_t n, const IDType* ids) override {
-		IndexType::erase_batch(n, ids);
+		auto lock = this->aquireWrite();
+		index_->erase_batch(n, ids);
 	}
 	// Mark search as const
 	std::unordered_map<IDType, float> searchQuery(
 		const std::vector<float>& query, int k) const override {
+		auto lock = this->aquireRead();
 		std::vector<IDType> indices(k);
 		std::vector<float> distances(k);
-		size_t ans_k = IndexType::single_search(
-			k, query.data(), distances.data(), indices.data());
+		size_t ans_k = index_->single_search(k, query.data(), distances.data(),
+											 indices.data());
 		std::unordered_map<IDType, float> result;
 		result.reserve(ans_k);
 		for (size_t i = 0; i < ans_k; ++i) {
@@ -53,26 +61,34 @@ class Segment final : public IndexType,
 		return result;
 	}
 
-	void mergeSegment(const std::shared_ptr<Segment>& other) {
-		IndexType::merge_from_other(std::move(other->getIndex()));
+	void mergeSegment(std::shared_ptr<ISegment<IDType>> other) override {
+		auto other_ptr = std::dynamic_pointer_cast<Segment>(other);
+		assert(other_ptr);
+		auto other_lock = other->aquireWrite();
+		auto current_lock = this->aquireWrite();
+		index_->merge_from_other(other->getIndex());
 	}
-	IndexType& getIndex() { return *static_cast<IndexType*>(this); }
-	const IndexType& getIndex() const {
-		return *static_cast<const IndexType*>(this);
-	}
+	std::shared_ptr<IBaseIndex<IDType>> getIndex() override { return index_; }
 
 	void serialize(const std::string& filename) const override {
+		auto lock = ISegment<typename IndexType::ID>::aquireRead();
 		FILE* fd = std::fopen(filename.c_str(), "w");
-		IndexType::serialize_index(fd);
-		std::fwrite(&seg_id_, sizeof(seg_id_), 1, fd);
+		index_->serialize_index(fd);
+		std::fwrite(&this->seg_id, sizeof(this->seg_id), 1, fd);
 		std::fclose(fd);
 	}
 
-	size_t size() const { return IndexType::size(); }
-	size_t getID() const override { return seg_id_; }
+	void serialize(FILE* fd) const override {
+		auto lock = ISegment<typename IndexType::ID>::aquireRead();
+		index_->serialize_index(fd);
+		std::fwrite(&this->seg_id, sizeof(this->seg_id), 1, fd);
+	}
+
+	size_t size() const override { return index_->size(); }
+	size_t getID() const override { return this->seg_id; }
 
    private:
-	size_t seg_id_;
+	std::shared_ptr<IBaseIndex<IDType>> index_;
 };
 
 template <class IDType>

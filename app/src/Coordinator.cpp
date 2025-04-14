@@ -2,9 +2,12 @@
 #include <string>
 
 #include "Coordinator.h"
+#include "Merging.h"
 #include "SearcherClient.h"
+#include "service.pb.h"
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+#include <vector>
 
     
 CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr) 
@@ -16,17 +19,16 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
     std::cout << "Hello from Coordinator Server!" << std::endl;
     
     UpdateSearchersState();
-    for (auto& client: searcher_clients) { 
-        std::cout << "searcher " + client.first + " returned:\n" 
-            << AskSingleSearcher(client.second, request).DebugString() 
-            << std::endl;
-    }
 
-    // todo
-    /*
-    auto new_document = response->add_result();
-    *new_document = request->data();
-     */
+    std::vector<SearchResponse> search_responses;
+    search_responses.reserve(searcher_clients.size());
+    size_t k = request->k();
+    for (auto& client: searcher_clients) {
+        search_responses.emplace_back(std::move(AskSingleSearcher(client.second, request)));
+        std::cout << "searcher #" + client.first + " returned:\n" << search_responses.back().DebugString() << "\n";
+    }
+    *response = MergeSearcherAnswers(search_responses, k);
+
     return grpc::Status::OK;
 }
 
