@@ -69,7 +69,6 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 						 IDType* ids) const override {
 		std::vector<float> res_dist(k + erased_.size());
 		std::vector<faiss::idx_t> res(k + erased_.size());
-		std::cout << "single_search: " << res.size() << " " << erased_.size() << "\n";
 		index_->search(1, q, res.size(), res_dist.data(), res.data());
 		std::vector<std::pair<float, faiss::idx_t> > sorted_res;
 		for (size_t i = 0; i < res.size(); ++i) {
