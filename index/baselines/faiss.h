@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <algorithm>
 #include "IBaseIndex.h"
 #include "SegmentFactory.h"
 #include "faiss/IndexFlat.h"
@@ -68,8 +69,9 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 						 IDType* ids) const override {
 		std::vector<float> res_dist(k + erased_.size());
 		std::vector<faiss::idx_t> res(k + erased_.size());
+		std::cout << "single_search: " << res.size() << " " << erased_.size() << "\n";
 		index_->search(1, q, res.size(), res_dist.data(), res.data());
-		std::map<float, faiss::idx_t> sorted_res;
+		std::vector<std::pair<float, faiss::idx_t> > sorted_res;
 		for (size_t i = 0; i < res.size(); ++i) {
 			auto it = inv_ids_.find(res[i]);
 			if (res[i] == -1 || it == inv_ids_.end() ||
@@ -77,18 +79,17 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 				res[i] = -1;
 				continue;
 			}
-			sorted_res[res_dist[i]] = res[i];
-			if (sorted_res.size() > k) {
-				sorted_res.erase(sorted_res.rbegin()->first);
-			}
+			std::cout << "added " << res_dist[i] << " " << res[i] << "\n";
+			sorted_res.push_back({res_dist[i], res[i]});
 		}
-		size_t i = 0;
-		for (const auto& [key, value] : sorted_res) {
+		std::sort(sorted_res.begin(), sorted_res.end());
+		std::cout << "added " << sorted_res.size() << "\n";
+		for (size_t i = 0; i < std::min(k, sorted_res.size()); ++i) {
+			auto [key, value] = sorted_res[i];
 			ids[i] = inv_ids_.at(value);
 			dist[i] = key;
-			i++;
 		}
-		return i;
+		return std::min(k, sorted_res.size());
 	}
 
 	void merge_from_other(

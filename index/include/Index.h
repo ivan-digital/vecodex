@@ -68,6 +68,9 @@ class Index final : public IIndex<typename IndexType::ID> {
 		if (this->callback_ && !inserted.empty()) {
 			this->callback_.value()({}, std::move(inserted));
 		}
+		if (this->storage_.merge_predicate(segmentThreshold_)) {
+			this->storage_.merge(100);
+		}
 	}
 
 	std::vector<IDType> search(const std::vector<float>& query,

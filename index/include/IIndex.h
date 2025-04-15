@@ -22,16 +22,9 @@ class IIndex {
 	IIndex() {
 		storage_.this_index = this;
 		using namespace std::chrono_literals;
-		merging_thread_ = std::make_shared<std::thread>([&]() {
-			while (!storage_.stopped.load()) {
-				storage_.merge(100);
-				std::this_thread::sleep_for(1s);
-			}
-		});
+		
 	}
 	~IIndex() {
-		storage_.stopped.store(true);
-		merging_thread_->join();
 	}
 	virtual void add(size_t n, const IDType* ids, const float* vectors) = 0;
 
@@ -110,10 +103,16 @@ class IIndex {
    protected:
 	struct SegmentStorage {
 		std::vector<std::vector<std::shared_ptr<ISegment<IDType>>>> levels;
-		std::atomic_bool stopped = false;
 		IIndex* this_index;
+		size_t sz = 0;
+		size_t counter = 0;
+		bool merge_predicate(long double target_mean) const {
+			return true;
+		}
 		void add(std::shared_ptr<ISegment<IDType>> segment) {
 			size_t i = 0;
+			counter++;
+			sz += segment->size();
 			for (; (1ll << i) < segment->size(); ++i) {
 				if (i == levels.size()) {
 					levels.push_back({});
@@ -126,7 +125,6 @@ class IIndex {
 			levels[i].push_back(segment);
 		}
 		void merge(size_t amount) {
-			std::lock_guard lock(this_index->segments_m_);
 			for (size_t i = 0; amount > 0 && i < levels.size(); ++i) {
 				std::vector<size_t> erased;
 				std::vector<std::shared_ptr<ISegment<IDType>>> inserted;
@@ -149,6 +147,7 @@ class IIndex {
 					levels[i][j].reset();
 					levels[i][j + 1].reset();
 					inserted.push_back(index);
+					counter--;
 				}
 				for (auto&& segment : inserted) {
 					this_index->segments_.push_back(segment);

@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
 	flat_stat << "stat\n";
 	hnsw_stat << "stat\n";
 	while (added < N) {
-		std::cout << added << " " << N << "\n";
 		int n = dis(gen) % (N - added + 1);
 		int q = dis(gen) % (Q - queried + 1);
 		float* add_vectors = new float[n * dim];
@@ -69,9 +68,7 @@ int main(int argc, char** argv) {
 	hnsw_stat.open("hnsw_srch.csv");
 	flat_stat << "stat\n";
 	hnsw_stat << "stat\n";
-	std::cout << "OK\n";
 	while (queried < Q) {
-		std::cout << queried << " " << Q << "\n";
 		queried++;
 		int q = dis(gen) % (Q - queried + 1);
 		std::vector<float> query_vector(dim);
