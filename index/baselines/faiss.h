@@ -79,11 +79,9 @@ class FaissIndex final : public vecodex::IBaseIndex<IDType> {
 				res[i] = -1;
 				continue;
 			}
-			std::cout << "added " << res_dist[i] << " " << res[i] << "\n";
 			sorted_res.push_back({res_dist[i], res[i]});
 		}
 		std::sort(sorted_res.begin(), sorted_res.end());
-		std::cout << "added " << sorted_res.size() << "\n";
 		for (size_t i = 0; i < std::min(k, sorted_res.size()); ++i) {
 			auto [key, value] = sorted_res[i];
 			ids[i] = inv_ids_.at(value);
