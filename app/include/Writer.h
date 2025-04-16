@@ -1,15 +1,17 @@
 #pragma once
 
 #include "Base.h"
+#include "StorageClient.h"
 
 #include "service.pb.h"
 #include "service.grpc.pb.h"
 
-#include "StorageClient.h"
-
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <thread>
+
+#include <boost/asio.hpp>
 
 #include "IIndex.h"
 #include "ISegment.h"
@@ -25,7 +27,7 @@ class WriterImpl final : public BaseService::Service {
 public:
     WriterImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& indexes_config);
 
-    ~WriterImpl();
+    ~WriterImpl() override;
 
     grpc::Status ProcessWriteRequest(grpc::ServerContext* context, const WriteRequest* request, WriteResponse* response) override;
 
@@ -39,6 +41,9 @@ private:
 
     EtcdClient etcd_client;
     StorageClient storage_client;
+
+    boost::asio::thread_pool callback_runner;
+    std::mutex runner_lock;
 };
 
 class Writer final : public BaseServer {
