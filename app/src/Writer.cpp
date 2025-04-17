@@ -67,7 +67,7 @@ WriterImpl::~WriterImpl() {
 }
 
 void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs, const std::string& index_id) {
-    auto task = [&]{
+    auto task = [this, ids = std::move(ids), segs = std::move(segs), index_id = index_id]{
         std::lock_guard guard(runner_lock);
 
         std::cout << "Run callback\n";
