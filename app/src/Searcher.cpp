@@ -37,21 +37,21 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
     std::cout << "Received update\n";
     std::cout << "added:\n";
     for (auto id : added) {
-    	std::cout << id << " ";
+        std::cout << id << " ";
     }
     std::cout << std::endl;
     std::cout << "deleted:\n";
     for (auto id : deleted) {
-    	std::cout << id << " ";
+        std::cout << id << " ";
     }
     std::cout << std::endl;
 
-	for (size_t added_id : added) {
-  		std::string segment_filename = std::to_string(added_id);
-  		bool ok = storage_client.getObject(index_id, segment_filename);
-  		if (!ok) {
-      		// todo
-  		}
+    for (size_t added_id : added) {
+        std::string segment_filename = std::to_string(added_id);
+        bool ok = storage_client.getObject(index_id, segment_filename);
+        if (!ok) {
+            // todo
+        }
 
         FILE* fd = std::fopen(segment_filename.c_str(), "r");
         auto segment = vecodex::DeserealizeSegment<std::string>(fd);
@@ -59,7 +59,7 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
 
         std::fclose(fd);
         std::remove(segment_filename.c_str());
-	}
+    }
 
     for (size_t deleted_id : deleted) {
         index->eraseSegment(deleted_id);
@@ -80,9 +80,10 @@ void SearcherImpl::GracefulShutdown() {
 
 Searcher::Searcher(const json& config)
     : BaseServer(config),
-      service(SearcherImpl(host, port, config["etcd_address"].template get_ref<const std::string&>(),
-                                       config["s3-host"].template get_ref<const std::string&>(),
-                           			   config["indexes"][0])) {}
+      service(SearcherImpl(host, port,
+          config["etcd_address"].template get_ref<const std::string&>(),
+          config["s3-host"].template get_ref<const std::string&>(),
+          config["indexes"][0])) {}
 
 void Searcher::Run() {
     InternalRun(service);

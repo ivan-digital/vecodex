@@ -11,7 +11,7 @@ WriterImpl::WriterImpl(const std::string& host, const std::string& port, const s
     storage_client.logIn("user", "password"); // todo
 
     for (const auto& item : indexes_config) {
-      	std::string id = item["id"].get<std::string>();
+        std::string id = item["id"].get<std::string>();
         indexes[id] = vecodex::CreateIndex<std::string>(item);
 
         auto callback = [this, id](auto&& PH1, auto&& PH2) {
@@ -32,7 +32,7 @@ grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const
 
     std::vector<float> vec(request->data().vector_data().begin(), request->data().vector_data().end());
     std::unordered_map<std::string, std::string> attributes(request->data().attributes().begin(), request->data().attributes().end());
-	std::string vec_id = request->data().id();
+    std::string vec_id = request->data().id();
 
     // ----- Testing -----
     std::cout << "Document received\nid: " << vec_id << std::endl;
@@ -46,18 +46,18 @@ grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const
     // -------------------
 
     if (attributes.find("index-id") == attributes.end()) {
-    	return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Missing index id");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Missing index id");
     }
     std::string index_id = attributes.at("index-id");
     if (indexes.find(index_id) == indexes.end()) {
-      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Wrong index id");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Wrong index id");
     }
 
     if (attributes.find("delete") == attributes.end()) {
-    	indexes[index_id]->add(1, &vec_id, vec.data());
+        indexes[index_id]->add(1, &vec_id, vec.data());
     }
     else {
-    	indexes[index_id]->erase(1, &vec_id);
+        indexes[index_id]->erase(1, &vec_id);
     }
     return grpc::Status::OK;
 }
@@ -67,7 +67,7 @@ WriterImpl::~WriterImpl() {
 }
 
 void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs, const std::string& index_id) {
-    auto task = [this, ids = std::move(ids), segs = std::move(segs), index_id = index_id]{
+    auto task = [this, ids = std::move(ids), segs = std::move(segs), index_id = index_id] {
         std::lock_guard guard(runner_lock);
 
         std::cout << "Run callback\n";
@@ -123,10 +123,12 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
     boost::asio::post(callback_runner, task);
 }
 
-Writer::Writer(const json& config) :
-    BaseServer(config), service(WriterImpl(host, port, config["etcd_address"].template get_ref<const std::string&>(),
-                                                       config["s3-host"].template get_ref<const std::string&>(),
-                                                       config["indexes"])) {}
+Writer::Writer(const json& config)
+    : BaseServer(config),
+      service(WriterImpl(host, port,
+          config["etcd_address"].template get_ref<const std::string&>(),
+          config["s3-host"].template get_ref<const std::string&>(),
+          config["indexes"])) {}
 
 void Writer::Run() {
     InternalRun(service);
