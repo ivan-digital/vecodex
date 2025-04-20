@@ -1,5 +1,7 @@
 #include "EtcdClient.h"
 #include "etcd/Response.hpp"
+#include <aws/common/date_time.h>
+#include <cassert>
 #include <optional>
 #include <vector>
 
@@ -33,6 +35,17 @@ etcd::Response EtcdClient::RemoveSearcherHost(const std::string& index_id, const
 std::vector<std::string> EtcdClient::ListShardIds(const std::string& index_id) {
     return ListAllElements(index_id + "/searchers");
 }
+
+double EtcdClient::GetSearcherAverageResponseTime(const std::string& index_id, const std::string& shard_id) {
+    auto result = ListAllElements(index_id + "/searchers/" + shard_id + "stats/average_response_time");
+    assert(result.size() == 1);
+    return std::stod(result[0]);
+}
+
+etcd::Response EtcdClient::UpdateAverageResponseTime(const std::string& index_id, const std::string& shard_id, double updated_value) {
+    return AddElement(index_id + "/searchers/" + shard_id + "stats/average_response_time", std::to_string(updated_value));
+}
+
 
 std::vector<std::string> EtcdClient::ListAllElements(const std::string& path) {
     std::vector<std::string> result;

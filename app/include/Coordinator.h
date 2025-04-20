@@ -11,6 +11,8 @@
 #include "EtcdClient.h"
 #include "Base.h"
 
+#include "utils/Stats.h"
+
 using service::SearchRequest;
 using service::SearchResponse;
 using service::BaseService;
@@ -20,21 +22,29 @@ class CoordinatorImpl final : public BaseService::Service {
 public:
     explicit CoordinatorImpl(const std::string& etcd_addr);
     ~CoordinatorImpl() {}
-    grpc::Status ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) override;
+    grpc::Status ProcessSearchRequest(grpc::ServerContext*, const SearchRequest*, SearchResponse*) override;
 
 private:
     using ShardToSearcher = std::unordered_map<std::string, std::vector<SearcherClient>>;
+    using ShardToStats = std::unordered_map<std::string, StatsManager>;
 
-    SearchResponse AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const;
+    SearchResponse AskSingleSearcher(
+        const SearcherClient&, const SearchRequest*, StatsManager::ResponseStatsCollector* collector = nullptr);
 
-    void UpdateSearchersState(const SearchRequest* request);
+    void UpdateSearchersState(const SearchRequest*);
 
 private:
     std::unordered_map<std::string, ShardToSearcher> searchers_map; // index_id -> shard_id -> searcher_client 
+    std::unordered_map<std::string, ShardToStats> searchers_stats; // index_id -> shard_id -> stats_manager 
     EtcdClient etcd_client;
 
 private:
     SearcherClient CreateSearcherClient(const std::string& addr) const;
+
+private:
+    void UpdateStatsIfNeeded(const std::string& index_id, const std::string& shard_id, const StatsManager& stats);
+
+    static constexpr size_t kRequestsToNextUpdate = 1;
 };
 
 

@@ -18,6 +18,10 @@ public:
 
     std::vector<std::string> ListShardIds(const std::string& index_id);
 
+    double GetSearcherAverageResponseTime(const std::string& index_id, const std::string& shard_id);
+
+    etcd::Response UpdateAverageResponseTime(const std::string& index_id, const std::string& shard_id, double updated_value);
+
 private:
     etcd::Client client_;
 
