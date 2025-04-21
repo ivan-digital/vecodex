@@ -9,12 +9,12 @@
 
 SearcherImpl::SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& shards_configs)
     : host(host), port(port), etcd_client(EtcdClient(etcd_addr)), storage_client(s3_host) {
-	for (const auto& item : shards_configs) {
+    for (const auto& item : shards_configs) {
         std::string index_id = item["index_id"].get<std::string>();
         std::string shard_id = item["shard_id"].get<std::string>();
         shards[index_id][shard_id] = vecodex::CreateIndex<std::string>(item);
         std::cout << "Created shard [" << index_id << ", " << shard_id << "]" << std::endl;
-	}
+    }
     Init();
     storage_client.logIn("user", "password"); // todo
 }
@@ -90,21 +90,21 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
 
 void SearcherImpl::Init() {
 	for (auto& p1 : shards) {
-    	for (auto& p2 : p1.second) {
-        	std::string index_id = p1.first;
-        	std::string shard_id = p2.first;
+        for (auto& p2 : p1.second) {
+            std::string index_id = p1.first;
+            std::string shard_id = p2.first;
             etcd_client.AddSearcherHost(index_id, shard_id, host + ":" + port);
-    	}
+        }
 	}
 }
 
 void SearcherImpl::GracefulShutdown() {
 	for (auto& p1 : shards) {
-    	for (auto& p2 : p1.second) {
-        	std::string index_id = p1.first;
-        	std::string shard_id = p2.first;
+        for (auto& p2 : p1.second) {
+            std::string index_id = p1.first;
+            std::string shard_id = p2.first;
             etcd_client.RemoveSearcherHost(index_id, shard_id, host + ":" + port);
-    	}
+        }
 	}
 }
 
