@@ -24,6 +24,8 @@ using service::UpdateRequest;
 using service::UpdateResponse;
 
 class WriterImpl final : public BaseService::Service {
+    using VecodexIndex = std::shared_ptr<vecodex::IIndex<std::string>>;
+    using VecodexSegment = std::shared_ptr<vecodex::ISegment<std::string>>;
 public:
     WriterImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& indexes_config);
 
@@ -32,12 +34,15 @@ public:
     grpc::Status ProcessWriteRequest(grpc::ServerContext* context, const WriteRequest* request, WriteResponse* response) override;
 
 private:
-    void indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs, const std::string& index_id);
+    void indexUpdateCallback(std::vector<size_t>&& ids, std::vector<VecodexSegment>&& segs, const std::string& index_id, const std::string& shard_id);
+
+    void updateIndexesState();
 
     std::string host;
     std::string port;
 
-    std::unordered_map<std::string, std::shared_ptr<vecodex::IIndex<std::string>>> indexes;
+    std::unordered_map<std::string, json> indexes_create_agrs;
+    std::unordered_map<std::string, std::unordered_map<std::string, VecodexIndex>> shards;
 
     EtcdClient etcd_client;
     StorageClient storage_client;
