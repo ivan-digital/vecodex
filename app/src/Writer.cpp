@@ -115,7 +115,7 @@ void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<std:
         request.mutable_deleted()->Assign(deleted.begin(), deleted.end());
         for (auto& host : hosts) {
             std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-            SearcherClient client(channel);
+            SearcherClient client(channel, host);
             UpdateResponse response = client.updateIndex(request);
         }
     };
