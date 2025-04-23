@@ -14,14 +14,17 @@ int main(int argc, char* argv[]) {
     }
 
     CoordinatorClient client = CoordinatorClient(
-        grpc::CreateChannel("[::]:" + port, grpc::InsecureChannelCredentials())
+        grpc::CreateChannel("[::]:" + port, grpc::InsecureChannelCredentials()),
+        "[::]:44400"
     );
 
-    service::Document doc;
-    doc.set_id(42);
+    std::vector<float> data{0.1, 0.1};
 
     service::SearchRequest req;
-    *req.mutable_data() = doc;
+    req.mutable_vector_data()->Assign(data.begin(), data.end());
+    req.set_k(3);
+    req.set_index_id("0");
+    req.set_shard_id("0");
 
     auto resp = client.getProcessedDocuments(req);
     std::cout << resp.DebugString() << std::endl;

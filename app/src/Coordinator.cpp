@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -13,6 +14,7 @@
     
 CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr) 
     : etcd_client(EtcdClient(etcd_addr)) {
+    etcd_client.DebugPrintEverything(); // debug
 }
 
 grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
@@ -26,11 +28,18 @@ grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context,
 
     for (auto& [shard_id, searchers] : searchers_map[index_id]) {
         for (auto& client : searchers) {
-            search_responses.emplace_back(std::move(AskSingleSearcher(client, request)));
+            std::cout << "Request to host with:\nindex_id: " << index_id << "\nshard_id: " 
+                << shard_id << "\naddress: " << client.GetAddress() << std::endl; // debug
+            auto stats_collector = searchers_stats[index_id][shard_id].CreateResponseData();
+            auto response = AskSingleSearcher(client, request, std::move(stats_collector));
+            UpdateStateIfNeeded(index_id, shard_id, client, searchers_stats[index_id][shard_id]);
+            if (response.has_value()) {
+                search_responses.emplace_back(std::move(response.value()));
+            }
         }
     }
     *response = MergeSearcherAnswers(search_responses, k);
-    
+
     return grpc::Status::OK;
 }
 
@@ -40,8 +49,18 @@ void CoordinatorImpl::UpdateSearchersState(const SearchRequest* request) {
     auto update_with_index_shard_info = [this](const std::string& index_id, const std::string& shard_id) {
         auto hosts = etcd_client.ListSearcherHosts(index_id, shard_id);
         searchers_map[index_id][shard_id] = std::vector<SearcherClient>();
+
+        // create searcher clients for given hosts
         for (const auto& addr : hosts) {
             searchers_map[index_id][shard_id].emplace_back(CreateSearcherClient(addr));
+        }
+
+        // create StatsManager for given index and shard
+        if (searchers_stats.find(index_id) == searchers_stats.end()) {
+            searchers_stats[index_id] = ShardToStats();
+            if (searchers_stats[index_id].find(shard_id) == searchers_stats[index_id].end()) {
+                searchers_stats[index_id].emplace(shard_id, StatsManager());
+            }
         }
     };
 
@@ -56,13 +75,36 @@ void CoordinatorImpl::UpdateSearchersState(const SearchRequest* request) {
     }
 }
 
-SearchResponse CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, const SearchRequest* request) const {
-    return client.getProcessedDocuments(*request);
+std::optional<SearchResponse> CoordinatorImpl::AskSingleSearcher(const SearcherClient& client, const SearchRequest* request, StatsManager::ResponseStatsCollector&& collector) {
+    try {
+        auto tmp = client.getProcessedDocuments(*request);
+        std::cout << "asking result: " << tmp.DebugString() << std::endl; // debug
+        return tmp;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        collector.SetError();
+        return std::nullopt;
+    }
+    // todo: error handling, retry policy, stats collectioning
 }
 
 SearcherClient CoordinatorImpl::CreateSearcherClient(const std::string& addr) const {
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
-    return SearcherClient(channel);
+    return SearcherClient(channel, addr);
+}
+
+void CoordinatorImpl::UpdateStateIfNeeded(const std::string& index_id, const std::string& shard_id, const SearcherClient& client, const StatsManager& stats) {
+    if (stats.GetErrorsCount() >= kHostErrorsLimit) {
+        try {
+            etcd_client.RemoveSearcherHost(index_id, shard_id, client.GetAddress());
+        } catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+        }
+        return;
+    }
+    if (stats.GetResponsesCount() % kRequestsToNextUpdate == 0) {
+        etcd_client.UpdateAverageResponseTime(index_id, shard_id, stats.GetAverageResponseTime());
+    }
 }
 
 
