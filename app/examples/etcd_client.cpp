@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
     etcd::Client etcd("http://[::]:2379");
 
     // Set a key-value pair
-    etcd.set(key, "my_value");
+    etcd.set("my_key", "my_value");
 
     // Get the value of a key
     auto task = etcd.get("my_key");
