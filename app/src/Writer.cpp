@@ -47,8 +47,7 @@ grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Wrong index id");
     }
 
-    size_t pos = rand() % shards[index_id].size();
-    std::string shard_id = std::next(shards[index_id].begin(), pos)->first;
+    std::string shard_id = chooseShard(index_id);
 
     if (attributes.find("delete") == attributes.end()) {
         shards[index_id][shard_id]->add(1, &vec_id, vec.data());
@@ -174,6 +173,28 @@ void WriterImpl::updateIndexesState() {
             std::cout << "Created shard [" << index_id << ", " << shard_id_add << "]" << std::endl;
         }
     }
+}
+
+std::string WriterImpl::chooseShard(const std::string& index_id) {
+    bool found = false;
+    std::string shard_id;
+    double min_time = 0;
+    for (const auto& shard : shards[index_id]) {
+        double shard_time = etcd_client.GetSearcherAverageResponseTime(index_id, shard.first);
+        if (!found) {
+            found = true;
+            shard_id = shard.first;
+            min_time = shard_time;
+        }
+        else {
+            if (shard_time < min_time) {
+                shard_id = shard.first;
+                min_time = shard_time;
+            }
+        }
+    }
+    std::cout << "Chosen shard [" << index_id << ", " << shard_id << "] with response time " << min_time << std::endl;
+    return shard_id;
 }
 
 Writer::Writer(const json& config)

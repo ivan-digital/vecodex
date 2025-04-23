@@ -38,6 +38,9 @@ private:
 
     void updateIndexesState();
 
+    std::string chooseShard(const std::string& index_id);
+
+private:
     std::string host;
     std::string port;
 
