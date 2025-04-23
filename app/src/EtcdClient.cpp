@@ -53,7 +53,9 @@ std::vector<std::string> EtcdClient::ListShardIds(const std::string& index_id) {
 
 double EtcdClient::GetSearcherAverageResponseTime(const std::string& index_id, const std::string& shard_id) {
     auto result = GetAllValues(index_id + "/searchers/" + shard_id + "/stats/average_response_time");
-    assert(result.size() == 1);
+    if (result.empty()) {
+        return 0.0;
+    }
     return std::stod(result[0]);
 }
 
