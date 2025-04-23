@@ -7,10 +7,10 @@
 
 #include "IndexFactory.h"
 
-SearcherImpl::SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& index_json)
+SearcherImpl::SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& index_json)  
     : host(host), port(port), etcd_client(EtcdClient(etcd_addr)), storage_client(s3_host),
-      index(vecodex::CreateIndex<std::string>(index_json)), index_id(index_json["id"].get<std::string>()) {
-    Init();
+      index(vecodex::CreateIndex<std::string>(index_json)), index_id(index_json["index_id"].get<std::string>()) {
+    Init(); 
     storage_client.logIn("user", "password"); // todo
 }
 
@@ -68,13 +68,11 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
 }
 
 void SearcherImpl::Init() {
-    etcd_client.AddSearcherHost(host + ":" + port);
-    etcd_client.AddSearcherHostByIndexId(index_id, host + ":" + port);
+    etcd_client.AddSearcherHost("0", "0", host + ":" + port);
 }
 
 void SearcherImpl::GracefulShutdown() {
-    etcd_client.RemoveSearcherHost(host + ":" + port);
-    etcd_client.RemoveSearcherHostByIndexId(index_id, host + ":" + port);
+    etcd_client.RemoveSearcherHost("0", "0",host + ":" + port);
 }
 
 

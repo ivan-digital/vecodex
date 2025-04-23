@@ -27,15 +27,11 @@ public:
         program_.add_argument("--s3-host")
             .help("...")
             .default_value("");
-        program_.add_argument("--searcher-hosts")
-            .help("...")
-            .nargs(argparse::nargs_pattern::any)
-            .default_value(std::vector<std::string>());
         program_.add_argument("--etcd-address")
             .help("...")
             .default_value("");
         program_.add_argument("--indexes")
-            .help("indexes in Json format: {\"id\": <id>, \"searcher_host\": <host>}")
+            .help("indexes and shards info")
             .default_value("");
 
         Parse_(argc, argv);

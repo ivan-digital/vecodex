@@ -5,8 +5,11 @@
 #include <grpcpp/server_builder.h>
 
 
-BaseClient::BaseClient(const std::shared_ptr<grpc::ChannelInterface> channel) : 
-    stub_(BaseService::NewStub(channel)) {}
+BaseClient::BaseClient(const std::shared_ptr<grpc::ChannelInterface> channel, std::string&& addr) : 
+    stub_(BaseService::NewStub(channel)), address(std::move(addr)) {}
+
+BaseClient::BaseClient(const std::shared_ptr<grpc::ChannelInterface> channel, const std::string& addr) : 
+    stub_(BaseService::NewStub(channel)), address(addr) {}
 
 SearchResponse BaseClient::getProcessedDocuments(const SearchRequest& request) const {
     SearchResponse response;
@@ -17,4 +20,8 @@ SearchResponse BaseClient::getProcessedDocuments(const SearchRequest& request) c
         throw std::runtime_error("Error while processing request. gRPC status code: " + std::to_string(status.error_code()));
     }
     return response;
+}
+
+std::string BaseClient::GetAddress() const {
+    return address;
 }
