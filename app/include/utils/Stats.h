@@ -72,7 +72,7 @@ public:
     }
 
     size_t GetSuccessCount() const {
-        assert(responses_cnt > errors_cnt);
+        assert(responses_cnt_ > errors_cnt_);
         return responses_cnt_ - errors_cnt_;
     }
 
