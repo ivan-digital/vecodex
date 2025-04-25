@@ -11,7 +11,7 @@ message Document {
 message SearchRequest {
     repeated float vector_data = 1;
     int32 k = 2;
-    optional string index_id = 3;
+    string index_id = 3;
     optional string shard_id = 4;
 }
 
@@ -29,6 +29,8 @@ message WriteResponse {
 message UpdateRequest {
     repeated uint64 added = 1; // segments' ids
     repeated uint64 deleted = 2; // segments' ids
+    string index_id = 3;
+    string shard_id = 4;
 }
 
 message UpdateResponse {

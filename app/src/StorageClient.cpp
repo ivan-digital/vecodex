@@ -101,7 +101,7 @@ bool StorageClient::delObject(const std::string& bucket_name, const std::string&
         std::cerr << "Error: deleteObject: " << err.GetExceptionName() << ": " << err.GetMessage() << std::endl;
     }
     else {
-        std::cout << "Successfully deleted the object." << std::endl;
+        std::cout << "Successfully deleted '" << filename << "' from '" << internal_bucket_name << "' ('" << bucket_name << "')." << std::endl;
     }
 
     return outcome.IsSuccess();

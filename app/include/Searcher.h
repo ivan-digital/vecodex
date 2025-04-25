@@ -19,10 +19,12 @@ using service::UpdateResponse;
 using service::BaseService;
 
 class SearcherImpl final : public BaseService::Service {
+    using VecodexIndex = std::shared_ptr<vecodex::IIndex<std::string>>;
+    using VecodexSegment = std::shared_ptr<vecodex::ISegment<std::string>>;
 public:
-    SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& index_json);
+    SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& shards_configs);
 
-    ~SearcherImpl();
+    ~SearcherImpl() override;
 
     grpc::Status ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) override;
 
@@ -36,8 +38,9 @@ private:
     std::string port;
     EtcdClient etcd_client;
     StorageClient storage_client;
-    std::shared_ptr<vecodex::IIndex<std::string>> index;
-    std::string index_id;
+
+    // [index_id][shard_id]
+    std::unordered_map<std::string, std::unordered_map<std::string, VecodexIndex>> shards;
 };
 
 class Searcher final : public BaseServer {
