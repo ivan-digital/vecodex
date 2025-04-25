@@ -19,7 +19,7 @@ class IIndex {
 	using UpdateCallback =
 		std::function<void(std::vector<size_t>&&,
 						   std::vector<std::shared_ptr<ISegment<IDType>>>&&)>;
-	IIndex() {
+	IIndex(bool enable_merge) : enable_merge_(enable_merge) {
 		storage_.this_index = this;
 		using namespace std::chrono_literals;
 		
@@ -107,7 +107,7 @@ class IIndex {
 		size_t sz = 0;
 		size_t counter = 0;
 		bool merge_predicate(long double target_mean) const {
-			return true;
+			return this_index->enable_merge_;
 		}
 		void add(std::shared_ptr<ISegment<IDType>> segment) {
 			size_t i = 0;
@@ -188,6 +188,7 @@ class IIndex {
 		}
 	};
 	SegmentStorage storage_;
+	bool enable_merge_;
 	std::optional<UpdateCallback> callback_;
 	std::shared_ptr<std::thread> execution_thread_;
 	std::shared_ptr<std::thread> merging_thread_;
