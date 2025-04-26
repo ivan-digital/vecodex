@@ -1,13 +1,12 @@
 {
-    "mode": "searcher",
+    "mode": "writer",
     "port": "44400",
-    "hostname": "searcher_1",
+    "hostname": "writer",
     "etcd_address": "http://etcd:2379",
     "s3-host": "http://minio:9000",
     "indexes": [
         {
-            "shard_id": "0",
-            "index_id": "0",
+            "id": "0",
             "library": "faiss",
             "type": "faissHNSWFlat",
             "dim": 2,
@@ -16,8 +15,7 @@
             "M": 2
         },
         {
-            "shard_id": "0",
-            "index_id": "1",
+            "id": "1",
             "library": "faiss",
             "type": "faissHNSWFlat",
             "dim": 2,

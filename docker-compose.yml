@@ -1,0 +1,73 @@
+services:
+  coordinator:
+    image: app:latest
+    ports:
+      - "8000:44400"
+      - "8001:44401"
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/coordinator_config.json
+    depends_on:
+      searcher_1:
+        condition: service_started
+      searcher_2:
+        condition: service_started
+      etcd:
+        condition: service_started
+
+  searcher_1:
+    image: app:latest
+    ports:
+      - "8002:44400"
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/searcher_1_config.json
+    depends_on:
+      etcd:
+        condition: service_started
+      minio:
+        condition: service_healthy
+
+  searcher_2:
+    image: app:latest
+    ports:
+      - "8003:44400"
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/searcher_2_config.json
+    depends_on:
+      etcd:
+        condition: service_started
+      minio:
+        condition: service_healthy
+
+  writer:
+    image: app:latest
+    ports:
+      - "8004:44400"
+    command: /app/cmake/build/vecodex-app --config-path /app/configs/writer_config.json
+    depends_on:
+      etcd:
+        condition: service_started
+      minio:
+        condition: service_healthy
+
+  etcd:
+    image: bitnami/etcd:latest
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - ~/minio/data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

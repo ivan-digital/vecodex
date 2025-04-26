@@ -4,22 +4,40 @@ package service;
 
 message Document {
     repeated float vector_data = 1;
-    optional int32 id = 2;
-    // what else should be here ?
+    string id = 2;
+    map<string, string> attributes = 3;
 }
 
 message SearchRequest {
-    optional Document data = 1;
-    optional int32 index_id = 2;
-    // what else should be here ?
+    repeated float vector_data = 1;
+    int32 k = 2;
+    string index_id = 3;
+    optional string shard_id = 4;
 }
 
 message SearchResponse {
-    repeated Document result = 1;
-    repeated float scores = 2;
-    // what else should be here ?
+    repeated string ids = 1;
+}
+
+message WriteRequest {
+    Document data = 1;
+}
+
+message WriteResponse {
+}
+
+message UpdateRequest {
+    repeated uint64 added = 1; // segments' ids
+    repeated uint64 deleted = 2; // segments' ids
+    string index_id = 3;
+    string shard_id = 4;
+}
+
+message UpdateResponse {
 }
 
 service BaseService {
     rpc ProcessSearchRequest (SearchRequest) returns (SearchResponse) {}
+    rpc ProcessWriteRequest (WriteRequest) returns (WriteResponse) {}
+    rpc ProcessUpdateRequest (UpdateRequest) returns (UpdateResponse) {}
 }

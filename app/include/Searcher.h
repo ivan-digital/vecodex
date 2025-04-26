@@ -6,17 +6,29 @@
 #include "service.pb.h"
 #include "service.grpc.pb.h"
 #include "Base.h"
+#include "StorageClient.h"
 
+#include "IIndex.h"
+#include "ISegment.h"
+#include "IndexFactory.h"
 
 using service::SearchRequest;
 using service::SearchResponse;
+using service::UpdateRequest;
+using service::UpdateResponse;
 using service::BaseService;
 
 class SearcherImpl final : public BaseService::Service {
+    using VecodexIndex = std::shared_ptr<vecodex::IIndex<std::string>>;
+    using VecodexSegment = std::shared_ptr<vecodex::ISegment<std::string>>;
 public:
-    SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr /* and smth related to index */);
-    ~SearcherImpl();
+    SearcherImpl(const std::string& host, const std::string& port, const std::string& etcd_addr, const std::string& s3_host, const json& shards_configs);
+
+    ~SearcherImpl() override;
+
     grpc::Status ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) override;
+
+    grpc::Status ProcessUpdateRequest(grpc::ServerContext* context, const UpdateRequest* request, UpdateResponse* response) override;
 private:
     void Init();
 
@@ -25,7 +37,10 @@ private:
     std::string host;
     std::string port;
     EtcdClient etcd_client;
-    /* smth related to index */
+    StorageClient storage_client;
+
+    // [index_id][shard_id]
+    std::unordered_map<std::string, std::unordered_map<std::string, VecodexIndex>> shards;
 };
 
 class Searcher final : public BaseServer {

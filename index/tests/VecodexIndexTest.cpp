@@ -11,8 +11,10 @@
 #include "IndexFactory.h"
 #include "faiss.h"
 #include "gtest/gtest.h"
-#include "json/json.h"
+#include <nlohmann/json.hpp>
 #include <boost/chrono.hpp>
+
+using Json = nlohmann::json;
 
 using SegmentHNSWType =
 	vecodex::Segment<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
@@ -209,7 +211,7 @@ TEST(VecodexIndexTest, IIndex) {
 }
 
 TEST(VecodexIndexTest, JsonParser) {
-	Json::Value json;
+	Json json;
 	json["type"] = "faissFlat";
 	json["library"] = "faiss";
 	json["dim"] = 2;

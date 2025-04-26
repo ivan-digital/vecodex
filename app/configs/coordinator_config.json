@@ -3,14 +3,6 @@
     "port": "44400",
     "hostname": "localhost",
     "etcd_address": "http://etcd:2379",
-    "indexes": [
-        {
-            "id": "0",
-            "host": "searcher_1:44400"
-        },
-        {
-            "id": "1",
-            "host": "searcher_2:44400"
-        }
-    ]
+    "s3-host": "http://minio:9000",
+    "indexes": {}
 }

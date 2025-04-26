@@ -75,7 +75,7 @@ endif()
 
 # Threading
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED thread timer chrono)
+find_package(Boost REQUIRED COMPONENTS thread timer chrono)
 
 # FAISS Configuration
 # Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables
@@ -89,16 +89,22 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
-add_subdirectory(external/jsoncpp)
 # Google Test Integration
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
 endif()
 
+# Json
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 # Main Library Target
 add_library(vecodex-index INTERFACE)
-
-target_include_directories(vecodex-index INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(vecodex-index INTERFACE faiss)
+target_include_directories(vecodex-index INTERFACE
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/baselines
+        external/faiss)
 
 # Test Executable
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
@@ -108,12 +114,12 @@ target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baseli
 # Link Libraries to Main Library Target
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 add_executable(Benchmark tests/Benchmark.cpp)
 target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 
-target_link_libraries(Benchmark PRIVATE Boost::boost Boost::thread jsoncpp_lib faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(Benchmark PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
