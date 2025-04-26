@@ -215,6 +215,7 @@ TEST(VecodexIndexTest, JsonParser) {
 	json["dim"] = 2;
 	json["threshold"] = 100;
 	json["metric"] = "L2";
+	json["enable_merge"] = true;
 	auto index = vecodex::CreateIndex<std::string>(json);
 }
 
