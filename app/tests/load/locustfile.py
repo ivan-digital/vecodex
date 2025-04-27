@@ -1,9 +1,12 @@
 from locust import User, task, between, events
 import random
 import grpc
+import grpc.experimental.gevent as grpc_gevent
 import time
 from generated.service_pb2 import Document, SearchRequest, WriteRequest
 from generated.service_pb2_grpc import BaseServiceStub
+
+grpc_gevent.init_gevent()
 
 class GrpcClient:
     def __init__(self, writer_host, searcher_host):
