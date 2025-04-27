@@ -43,8 +43,6 @@ class Index final : public IIndex<typename IndexType::ID> {
 		std::lock_guard lock(this->segments_m_);
 		std::vector<std::shared_ptr<ISegment<IDType>>> inserted;
 		inserted.reserve((n / segmentThreshold_) + 1);
-		size_t last =
-			this->segments_.size() > 0 ? this->segments_.size() - 1 : 0;
 		while (n) {
 			size_t batch =
 				std::min(n, segmentThreshold_ - this->segments_.back()->size());
@@ -56,20 +54,16 @@ class Index final : public IIndex<typename IndexType::ID> {
 			vectors += (batch * d_);
 			n -= batch;
 			if (this->segments_.back()->size() == segmentThreshold_) {
+				inserted.push_back(this->segments_.back());
+				this->storage_.add(this->segments_.back());
 				this->segments_.push_back(std::move(factory_->create()));
-			}
-		}
-		for (size_t i = last; i < this->segments_.size(); ++i) {
-			if (this->segments_[i]->size() == segmentThreshold_) {
-				inserted.push_back(this->segments_[i]);
-				this->storage_.add(this->segments_[i]);
 			}
 		}
 		if (this->callback_ && !inserted.empty()) {
 			this->callback_.value()({}, std::move(inserted));
 		}
 		if (this->storage_.merge_predicate(segmentThreshold_)) {
-			this->storage_.merge(100);
+			this->storage_.merge(200);
 		}
 	}
 
