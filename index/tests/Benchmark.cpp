@@ -2,13 +2,29 @@
 #include <random>
 #include <chrono>
 #include <fstream>
+#include <cmath>
 #include "Index.h"
 #include "faiss.h"
+#include <faiss/MetricType.h>
 
 using IndexHNSWType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexHNSWFlat, std::string>>;
 using IndexFlatType =
 	vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, std::string>>;
+int counter_callback = 0;
+void update_callback(
+	std::vector<size_t>&& ids,
+	std::vector<std::shared_ptr<vecodex::ISegment<std::string>>>&& segs) {
+	counter_callback++;
+}
+double dist(const std::vector<double>& a) {
+	double ans = 0;
+	for (double x : a) {
+		ans += x * x;
+	}
+	return std::sqrtl(ans);
+}
+
 
 int main(int argc, char** argv) {
 	const std::string characters =
@@ -30,10 +46,11 @@ int main(int argc, char** argv) {
 	std::uniform_int_distribution<>(0, N);
 	std::uniform_int_distribution<> dis(0, N);
 	std::uniform_real_distribution<> dis_real(0.0, 10.0);
-	IndexFlatType flat_index(dim, 20, enable_merge, dim, faiss::MetricType::METRIC_L2);
-	IndexHNSWType hnsw_index(dim, 20, enable_merge, dim, 2, faiss::MetricType::METRIC_L2);
+	IndexFlatType flat_index(dim, 100, enable_merge, dim, faiss::MetricType::METRIC_L2);
+	IndexHNSWType hnsw_index(dim, 100, enable_merge, dim, 2, faiss::MetricType::METRIC_L2);
+	hnsw_index.setUpdateCallback(update_callback);
 
-	int batch = N / 100;
+	int batch = 20;
 
 	int added = 0;
 	int queried = 0;
@@ -41,6 +58,7 @@ int main(int argc, char** argv) {
 	std::ofstream hnsw_stat("hnsw_stat_" + std::to_string(enable_merge) + ".csv");
 	flat_stat << "stat,n\n";
 	hnsw_stat << "stat,n\n";
+	std::unordered_map<std::string, std::vector<double> > data;
 	while (added < N) {
 		int n = batch;
 		added += n;
@@ -55,6 +73,8 @@ int main(int argc, char** argv) {
 			for (int j = 0; j < 15; ++j) {
 				ids[i].push_back(characters[dis(gen) % characters.size()]);
 			}
+			std::vector<double> v(add_vectors + i * dim, add_vectors + (i + 1) * dim);
+			data[ids[i]] = v;
 		}
 
 		auto start = std::chrono::high_resolution_clock::now();
@@ -72,8 +92,13 @@ int main(int argc, char** argv) {
 	hnsw_stat.close();
 	flat_stat.open("flat_srch_" + std::to_string(enable_merge) + ".csv");
 	hnsw_stat.open("hnsw_srch_" + std::to_string(enable_merge) + ".csv");
+	std::ofstream hnsw_recall("hnsw_recall_" + std::to_string(enable_merge) + ".csv");
+	std::ofstream flat_recall("flat_recall_" + std::to_string(enable_merge) + ".csv");
 	flat_stat << "stat\n";
 	hnsw_stat << "stat\n";
+
+	hnsw_recall << "min,max\n";
+	flat_recall << "min,max\n";
 	while (queried < Q) {
 		queried++;
 		std::cout << queried << "/" << Q << "\n";
@@ -91,5 +116,17 @@ int main(int argc, char** argv) {
 		auto ans_hnsw = hnsw_index.search(query_vector, k);
 		finish = std::chrono::high_resolution_clock::now();
 		hnsw_stat << std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count() << "\n";
+
+		std::sort(ans_flat.begin(), ans_flat.end(), [&](const std::string& a, const std::string& b) {
+			return dist(data[a]) < dist(data[b]);
+		});
+
+		std::sort(ans_hnsw.begin(), ans_hnsw.end(), [&](const std::string& a, const std::string& b) {
+			return dist(data[a]) < dist(data[b]);
+		});
+
+		hnsw_recall << dist(data[ans_hnsw[0]]) << "," << dist(data[ans_hnsw.back()]) << "\n";
+		flat_recall << dist(data[ans_flat[0]]) << "," << dist(data[ans_flat.back()]) << "\n";
 	}
+	std::cout << "counter: " << counter_callback << "\n";
 }

@@ -275,6 +275,7 @@ TEST(VecodexIndexTest, Basic) {
 	std::cout << std::fixed << "flat: " << static_cast<float>(sum_flat) / tests
 			  << "ns, hnsw: " << static_cast<float>(sum_hnsw) / tests << "ns\n";
 }
+
 int main(int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

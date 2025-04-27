@@ -194,6 +194,7 @@ class IIndex {
 	std::shared_ptr<std::thread> merging_thread_;
 	std::shared_ptr<boost::asio::io_context> ctx_;
 	std::vector<std::shared_ptr<ISegment<IDType>>> segments_;
+	std::shared_ptr<ISegment<IDType>> last_;
 	mutable std::shared_mutex segments_m_;
 };
 }  // namespace vecodex
