@@ -41,6 +41,13 @@ grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, co
     std::vector<std::string> result;
     for (auto& shard : shards[index_id]) {
         std::vector<std::string> shard_result = shard.second->search(query, k);
+
+        std::cout << "Found ids: ";
+        for (const auto& id : shard_result) {
+            std::cout << id << ", ";
+        }
+        std::cout << "\n";
+
         result.insert(result.end(), shard_result.begin(), shard_result.end());
     }
     response->mutable_ids()->Assign(result.begin(), result.end());

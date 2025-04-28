@@ -1,0 +1,8 @@
+{
+    "mode": "coordinator",
+    "port": "44400",
+    "hostname": "localhost",
+    "etcd_address": "http://etcd:2379",
+    "s3-host": "http://minio:9000",
+    "indexes": {}
+}

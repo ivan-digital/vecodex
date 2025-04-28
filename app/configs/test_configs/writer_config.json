@@ -9,20 +9,10 @@
             "id": "0",
             "library": "faiss",
             "type": "faissHNSWFlat",
-            "dim": 2,
+            "dim": 768,
             "threshold": 3,
             "metric": "L2",
-            "M": 2,
-            "enable_merge": true
-        },
-        {
-            "id": "1",
-            "library": "faiss",
-            "type": "faissHNSWFlat",
-            "dim": 2,
-            "threshold": 3,
-            "metric": "L2",
-            "M": 2,
+            "M": 100,
             "enable_merge": true
         }
     ]
