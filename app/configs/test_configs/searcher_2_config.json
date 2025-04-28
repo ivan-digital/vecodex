@@ -11,9 +11,9 @@
             "library": "faiss",
             "type": "faissHNSWFlat",
             "dim": 768,
-            "threshold": 3,
+            "threshold": 300,
             "metric": "L2",
-            "M": 100,
+            "M": 2,
             "enable_merge": true
         }
     ]
