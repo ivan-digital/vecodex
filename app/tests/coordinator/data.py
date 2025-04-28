@@ -1,9 +1,9 @@
 from datasets import load_dataset
 import torch
 
-MAX_DOCS_STORE = 1000
-MAX_QUERIES_EVAL = 10
-K = 20
+MAX_DOCS_STORE = 10000
+MAX_QUERIES_EVAL = 20
+K = 10
 DATASET_NAME = "Cohere/wikipedia-22-12-en-embeddings"
 
 
@@ -12,8 +12,10 @@ class Dataset:
         self.k = k
         self.doc_ids = []
         self.doc_embs = []
+        self.docs = []
         self.eval_doc_ids = []
         self.eval_embs = []
+        self.eval_docs = []
         self.target_doc_ids = []
         self.predicted_doc_ids = []
         self.index_id = "0"
@@ -41,23 +43,79 @@ class Dataset:
             if i < MAX_DOCS_STORE:
                 self.doc_ids.append(docid)
                 self.doc_embs.append(emb)
+                self.docs.append(doc['text'] + " " + doc['title'])
             elif i < MAX_DOCS_STORE + MAX_QUERIES_EVAL:
                 self.eval_doc_ids.append(docid)
                 self.eval_embs.append(emb)
+                self.eval_docs.append(doc['text'] + " " + doc['title'])
             else:
                 break
 
         self.doc_embs = torch.tensor(self.doc_embs)    
-        print(f"embs shape = {self.doc_embs.shape}")
-        
+
         self.eval_embs = torch.tensor(self.eval_embs)    
 
         for docid, emb in zip(self.eval_doc_ids, self.eval_embs):
             self.target_doc_ids.append(self.find_relevant_ids_(emb))
     
 
-    def mAP(self, found: list[str], real: list[str]):
-        pass
+    def precision_k(self, relevant, retrieved):
+        ans = 0.0
+        for rel, ret in zip(relevant, retrieved):
+            rels = set(rel)
+            rets = set(ret)
+            ans += len(rets.intersection(rels)) / len(rels) 
+        return ans / len(relevant)
+
+
+    def recall_k(self, relevant, retrieved):
+        ans = 0.0
+        ### Not implemented
+        return ans
+
+    def _average_precision(self, relevant, retrieved):
+        """
+        Calculate Average Precision (AP) for a single query using PyTorch.
+        """
+        relevant = set(relevant)
+        retrieved = torch.as_tensor(retrieved)
+        relevant_tensor = torch.tensor(list(relevant))
+        
+        # PyTorch equivalent of np.in1d
+        is_relevant = (retrieved.unsqueeze(1) == relevant_tensor.unsqueeze(0)).any(dim=1)
+        
+        # Cumulative sum of relevant items at each rank
+        relevant_at_k = torch.cumsum(is_relevant.float(), dim=0)
+        
+        # Precision at each rank
+        precision_at_k = relevant_at_k / (torch.arange(len(retrieved), dtype=torch.float32) + 1)
+        
+        # Average precision only over relevant ranks
+        ap = torch.sum(precision_at_k * is_relevant.float()) / len(relevant)
+        
+        return ap.item()
+
+
+    def _mean_average_precision(self, relevant_docs, retrieved_docs):
+        """
+        Calculate Mean Average Precision (mAP) across multiple queries.
+        
+        Args:
+            relevant_docs: List of lists, where each sublist contains indices of relevant docs for a query
+            retrieved_docs: List of lists, where each sublist contains indices of retrieved docs for a query
+            
+        Returns:
+            Mean Average Precision score
+        """
+        aps = []
+        for rel, ret in zip(relevant_docs, retrieved_docs):
+            # Skip queries with no relevant documents
+            if len(rel) == 0:
+                continue
+            ap = self._average_precision(rel, ret)
+            aps.append(ap)
+        
+        return torch.mean(torch.tensor(aps)) if aps else 0.0
 
 
     def iterate_write_document(self):
@@ -77,11 +135,22 @@ class Dataset:
 
 
     def count_metrics(self):
-        print(self.predicted_doc_ids)
+        # print(self.predicted_doc_ids)
         print(self.target_doc_ids)
+
+        metrics = {
+            "mAP": self._mean_average_precision(self.target_doc_ids, self.predicted_doc_ids),
+            "precision_k": self.precision_k(self.target_doc_ids, self.predicted_doc_ids),
+            "recall_k": self.recall_k(self.target_doc_ids, self.predicted_doc_ids),
+        }
+        
+        print(f"metrics: {metrics}")
 
 
 if __name__ == "__main__":
-    dataset = Dataset(k=10)
-    a = dataset.iterate_write_document()
-    print(a)
+    d = Dataset(k=10)
+    print("searched: ", d.eval_docs[19], end='\n')
+    print("9993: ", d.docs[9993], end='\n')
+    print("3542: ", d.docs[3542], end='\n')
+    print(torch.sum(d.doc_embs[9993] * d.eval_embs[19]), end='\n')
+    print(torch.sum(d.doc_embs[3542] * d.eval_embs[19]), end='\n')

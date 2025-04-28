@@ -10,9 +10,9 @@
             "library": "faiss",
             "type": "faissHNSWFlat",
             "dim": 768,
-            "threshold": 300,
+            "threshold": 10000,
             "metric": "L2",
-            "M": 2,
+            "M": 200,
             "enable_merge": true
         }
     ]
