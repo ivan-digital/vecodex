@@ -1,9 +1,13 @@
 from locust import User, task, between, events, SequentialTaskSet
 import grpc
 import time
+import pickle
 from generated.service_pb2 import Document, SearchRequest, WriteRequest
 from generated.service_pb2_grpc import BaseServiceStub
-from data import Dataset, MAX_DOCS_STORE, MAX_QUERIES_EVAL, K
+from data import Dataset, MAX_DOCS_STORE, MAX_QUERIES_EVAL, K, RETRIEVED_CNT_LIST, METRICS_FILENAME
+
+METRICS_STORAGE = []
+
 
 class GrpcClient:
     def __init__(self, writer_host, searcher_host):
@@ -32,7 +36,6 @@ class GrpcClient:
 class CustomSequence(SequentialTaskSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.counter = 0
         self.first_task_repeat = MAX_DOCS_STORE
         self.second_task_repeat = MAX_QUERIES_EVAL
         self.dataset = Dataset(k=K)
@@ -61,8 +64,10 @@ class CustomSequence(SequentialTaskSet):
 
     @task
     def count_metrics(self):
-        print("count metrics")
-        self.dataset.count_metrics()
+        metrics = self.dataset.count_metrics()
+        METRICS_STORAGE.append(metrics)
+        with open(METRICS_FILENAME, "wb") as f:
+            pickle.dump(METRICS_STORAGE, f)
         self.interrupt()
     
     def track_request(self, request_type, start_time, exception=None):
@@ -75,9 +80,10 @@ class CustomSequence(SequentialTaskSet):
         )
 
 
-class MixedTrafficUser(User):
+class CustomUser(User):
     wait_time = between(0.1, 1)
     tasks = [CustomSequence]
+    load_counter = 0
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,3 +91,12 @@ class MixedTrafficUser(User):
             writer_host="localhost:8004",
             searcher_host="localhost:8000"
         )
+
+    def on_start(self):
+        # Assign different data per user
+        if RETRIEVED_CNT_LIST is None:
+            self.tasks[0].dataset = Dataset(k=K)
+        else:
+            assert(CustomUser.load_counter < len(RETRIEVED_CNT_LIST), f"Created more Users than experiments set up: {CustomUser.load_counter}")
+            self.tasks[0].dataset = Dataset(k=RETRIEVED_CNT_LIST[CustomUser.load_counter])
+        CustomUser.load_counter += 1

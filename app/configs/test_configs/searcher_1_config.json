@@ -9,11 +9,11 @@
             "shard_id": "0",
             "index_id": "0",
             "library": "faiss",
-            "type": "faissHNSWFlat",
+            "type": "faissFlat",
             "dim": 768,
             "threshold": 10000,
             "metric": "L2",
-            "M": 200,
+            "M": 300,
             "enable_merge": true
         }
     ]
