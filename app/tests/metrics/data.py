@@ -8,8 +8,7 @@ METRICS_FILENAME = os.environ.get("METRICS_FILENAME") if os.environ.get("METRICS
 CHARTS_FILENAME = os.environ.get("CHARTS_FILENAME") if os.environ.get("CHARTS_FILENAME") else "metrics.png"
 PARAMETER_NAME = "k"
 DATASET_NAME = "Cohere/wikipedia-22-12-en-embeddings"
-RETRIEVED_CNT_LIST = [2 * x for x in range(1, 16)]
-# RETRIEVED_CNT_LIST = [10]
+RETRIEVED_CNT_LIST = [2 * x for x in range(2, 20)]
 
 
 class Dataset:
@@ -134,7 +133,6 @@ class Dataset:
         metrics = {
             "mAP": self._mean_average_precision(self.target_doc_ids, self.predicted_doc_ids),
             "precision_k": self.precision_k(self.target_doc_ids, self.predicted_doc_ids),
-            # "recall_k": self.recall_k(self.target_doc_ids, self.predicted_doc_ids),
             "ndcg": self.mean_ndcg(self.target_doc_ids, self.predicted_doc_ids),
         }
         

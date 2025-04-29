@@ -5,7 +5,6 @@ from generated.service_pb2 import Document, SearchRequest, WriteRequest
 from generated.service_pb2_grpc import BaseServiceStub
 from data import Dataset, RETRIEVED_CNT_LIST, METRICS_FILENAME, PARAMETER_NAME, CHARTS_FILENAME
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class GrpcClient:
@@ -80,7 +79,7 @@ class VecodexTest:
         for metric_name, values in metrics_storage.items():
             idx += 1
             ax = figure.add_subplot(ncharts, 1, idx)        
-            ax.plot(np.arange(len(values)), values, label=metric_name)
+            ax.plot(RETRIEVED_CNT_LIST, values, label=metric_name)
             ax.set_xlabel(PARAMETER_NAME)
             ax.set_ylabel(metric_name)
             ax.legend()
