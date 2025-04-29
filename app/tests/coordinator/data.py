@@ -1,12 +1,15 @@
 from datasets import load_dataset
 import torch
+import os
 
-MAX_DOCS_STORE = 10
-MAX_QUERIES_EVAL = 10
-K = 1
+MAX_DOCS_STORE = int(os.environ.get("MAX_DOCS_STORE")) if os.environ.get("MAX_DOCS_STORE") else 1000
+MAX_QUERIES_EVAL = int(os.environ.get("MAX_QUERIES_EVAL")) if os.environ.get("MAX_QUERIES_EVAL") else 10
+METRICS_FILENAME = os.environ.get("METRICS_FILENAME") if os.environ.get("METRICS_FILENAME") else "metrics.pkl"
+CHARTS_FILENAME = os.environ.get("CHARTS_FILENAME") if os.environ.get("CHARTS_FILENAME") else "metrics.png"
+PARAMETER_NAME = "k"
 DATASET_NAME = "Cohere/wikipedia-22-12-en-embeddings"
-RETRIEVED_CNT_LIST = [8, 10, 12]
-METRICS_FILENAME = "metrics.pkl"
+RETRIEVED_CNT_LIST = [2 * x for x in range(1, 16)]
+# RETRIEVED_CNT_LIST = [10]
 
 
 class Dataset:
@@ -55,10 +58,6 @@ class Dataset:
         self.doc_embs = torch.tensor(self.doc_embs)
         self.eval_embs = torch.tensor(self.eval_embs)
 
-        # normalize
-        self.doc_embs / torch.diag(self.doc_embs @ self.doc_embs.T).reshape(-1, 1)
-        self.eval_embs / torch.diag(self.eval_embs @ self.eval_embs.T).reshape(-1, 1)
-
         for docid, emb in zip(self.eval_doc_ids, self.eval_embs):
             self.target_doc_ids.append(self.find_relevant_ids_(emb))
     
@@ -71,9 +70,8 @@ class Dataset:
         return ans / len(relevant)
 
     def recall_k(self, relevant, retrieved):
-        ans = 0.0
         ### Not implemented
-        return ans
+        return 0
 
     def _average_precision(self, relevant, retrieved):
         relevant = set(relevant)
@@ -121,35 +119,24 @@ class Dataset:
 
     def iterate_write_document(self):
         for docid, emb in zip(self.doc_ids, self.doc_embs):
-            print(f"write doc id: {docid}")
             yield docid, emb
     
     def iterate_search_requests(self):
         for emb in self.eval_embs:
-            print(f"search")
             yield emb
 
     def save_predicted_ids(self, predicted_ids: list[str]):
         self.predicted_doc_ids.append(predicted_ids)
 
     def count_metrics(self):
-        # print(self.predicted_doc_ids)
-        print(self.target_doc_ids)
+        print("Target docids:\n", self.target_doc_ids)
 
         metrics = {
             "mAP": self._mean_average_precision(self.target_doc_ids, self.predicted_doc_ids),
             "precision_k": self.precision_k(self.target_doc_ids, self.predicted_doc_ids),
-            "recall_k": self.recall_k(self.target_doc_ids, self.predicted_doc_ids),
+            # "recall_k": self.recall_k(self.target_doc_ids, self.predicted_doc_ids),
             "ndcg": self.mean_ndcg(self.target_doc_ids, self.predicted_doc_ids),
         }
         
         print(f"metrics: {metrics}")
-
-
-if __name__ == "__main__":
-    d = Dataset(k=10)
-    print("searched: ", d.eval_docs[19], end='\n')
-    print("9993: ", d.docs[9993], end='\n')
-    print("3542: ", d.docs[3542], end='\n')
-    print(torch.sum(d.doc_embs[9993] * d.eval_embs[19]), end='\n')
-    print(torch.sum(d.doc_embs[3542] * d.eval_embs[19]), end='\n')
+        return metrics
