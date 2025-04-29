@@ -8,8 +8,8 @@ services:
     depends_on:
       searcher_1:
         condition: service_started
-      searcher_2:
-        condition: service_started
+      # searcher_2:
+      #   condition: service_started
       etcd:
         condition: service_started
     volumes:
@@ -29,18 +29,18 @@ services:
       - ../../configs/test_configs/:/configs
 
 
-  searcher_2:
-    image: vecodex:latest
-    ports:
-      - "8003:44400"
-    command: /app/cmake/build/vecodex-app --config-path /configs/searcher_2_config.json
-    depends_on:
-      etcd:
-        condition: service_started
-      minio:
-        condition: service_healthy
-    volumes:
-      - ../../configs/test_configs/:/configs
+  # searcher_2:
+  #   image: vecodex:latest
+  #   ports:
+  #     - "8003:44400"
+  #   command: /app/cmake/build/vecodex-app --config-path /configs/searcher_2_config.json
+  #   depends_on:
+  #     etcd:
+  #       condition: service_started
+  #     minio:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ../../configs/test_configs/:/configs
 
   writer:
     image: vecodex:latest
