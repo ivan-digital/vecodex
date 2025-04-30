@@ -20,6 +20,8 @@ CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr)
 grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
     std::cout << "Hello from Coordinator Server!" << std::endl;
     
+    std::lock_guard guard(mutex_);
+
     UpdateSearchersState(request);
 
     auto index_id = request->index_id();

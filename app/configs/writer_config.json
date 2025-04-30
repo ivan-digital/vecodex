@@ -12,7 +12,8 @@
             "dim": 2,
             "threshold": 3,
             "metric": "L2",
-            "M": 2
+            "M": 2,
+            "enable_merge": true
         },
         {
             "id": "1",
@@ -21,7 +22,8 @@
             "dim": 2,
             "threshold": 3,
             "metric": "L2",
-            "M": 2
+            "M": 2,
+            "enable_merge": true
         }
     ]
 }

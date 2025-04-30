@@ -21,8 +21,8 @@ class Index final : public IIndex<typename IndexType::ID> {
 					   std::vector<std::shared_ptr<ISegment<IDType>>>&&)>;
 
 	template <typename... ArgTypes>
-	Index(int dim, int segmentThreshold, ArgTypes... args)
-		: IIndex<IDType>(),
+	Index(int dim, int segmentThreshold, bool enable_merge, ArgTypes... args)
+		: IIndex<IDType>(enable_merge),
 		  d_(dim),
 		  segmentThreshold_(segmentThreshold),
 		  factory_(std::make_shared<SegmentFactory<IndexType, ArgTypes...>>(
@@ -30,9 +30,9 @@ class Index final : public IIndex<typename IndexType::ID> {
 		this->segments_.push_back(std::move(factory_->create()));
 	}
 
-	Index(int dim, int segmentThreshold,
+	Index(int dim, int segmentThreshold, bool enable_merge, 
 		  const std::shared_ptr<SegmentFactoryBase<IndexType>>& factory)
-		: IIndex<IDType>(),
+		: IIndex<IDType>(enable_merge),
 		  d_(dim),
 		  segmentThreshold_(segmentThreshold),
 		  factory_(factory) {
@@ -67,6 +67,9 @@ class Index final : public IIndex<typename IndexType::ID> {
 		}
 		if (this->callback_ && !inserted.empty()) {
 			this->callback_.value()({}, std::move(inserted));
+		}
+		if (this->storage_.merge_predicate(segmentThreshold_)) {
+			this->storage_.merge(100);
 		}
 	}
 

@@ -24,17 +24,18 @@ std::shared_ptr<vecodex::IIndex<IDType>> CreateIndex(const Json& json) {
 	int dim = json["dim"].get<int>();
 	int threshold = json["threshold"].get<int>();
 	std::string metric = json["metric"].get<std::string>();
+  bool enable_merge = json["enable_merge"].get<bool>();
 	if (lib == "faiss") {
 		faiss::MetricType metric_type = faiss_metric_map.at(metric);
 		if (type == faissFlat) {
 			return std::make_shared<
 				vecodex::Index<baseline::FaissIndex<faiss::IndexFlat, IDType>>>(
-				dim, threshold, dim, metric_type);
+				dim, threshold, enable_merge, dim, metric_type);
 		} else if (type == faissHNSWFlat) {
 			int M = json["M"].get<int>();
 			return std::make_shared<vecodex::Index<
 				baseline::FaissIndex<faiss::IndexHNSWFlat, IDType>>>(
-				dim, threshold, dim, M, metric_type);
+				dim, threshold, enable_merge, dim, M, metric_type);
 		} else {
 			throw std::runtime_error("Doesn't support index type " + type);
 		}

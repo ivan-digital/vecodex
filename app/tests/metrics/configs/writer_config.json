@@ -1,0 +1,19 @@
+{
+    "mode": "writer",
+    "port": "44400",
+    "hostname": "writer",
+    "etcd_address": "http://etcd:2379",
+    "s3-host": "http://minio:9000",
+    "indexes": [
+        {
+            "id": "0",
+            "library": "faiss",
+            "type": "faissFlat",
+            "dim": 768,
+            "threshold": 1000,
+            "metric": "L2",
+            "M": 3,
+            "enable_merge": true
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "mode": "searcher",
+    "port": "44400",
+    "hostname": "searcher_2",
+    "etcd_address": "http://etcd:2379",
+    "s3-host": "http://minio:9000",
+    "indexes": [
+        {
+            "shard_id": "1",
+            "index_id": "0",
+            "library": "faiss",
+            "type": "faissFlat",
+            "dim": 768,
+            "threshold": 1000,
+            "metric": "L2",
+            "M": 3,
+            "enable_merge": true
+        }
+    ]
+}

@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <optional>
+#include <mutex>
 
 #include "service.pb.h"
 #include "service.grpc.pb.h"
@@ -38,7 +39,7 @@ private:
     std::unordered_map<std::string, ShardToSearcher> searchers_map; // index_id -> shard_id -> searcher_client 
     std::unordered_map<std::string, ShardToStats> searchers_stats; // index_id -> shard_id -> stats_manager 
     EtcdClient etcd_client;
-
+    std::mutex mutex_;
 private:
     SearcherClient CreateSearcherClient(const std::string& addr) const;
 
@@ -48,6 +49,8 @@ private:
     static constexpr size_t kRequestsToNextUpdate = 1;
 
     static constexpr size_t kHostErrorsLimit = 1;
+
+
 };
 
 
