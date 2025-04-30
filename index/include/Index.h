@@ -27,7 +27,7 @@ class Index final : public IIndex<typename IndexType::ID> {
 		  segmentThreshold_(segmentThreshold),
 		  factory_(std::make_shared<SegmentFactory<IndexType, ArgTypes...>>(
 			  std::forward_as_tuple(args...))) {
-		this->segments_.push_back(std::move(factory_->create()));
+		this->last_ = std::move(factory_->create());
 	}
 
 	Index(int dim, int segmentThreshold, bool enable_merge, 
@@ -36,40 +36,35 @@ class Index final : public IIndex<typename IndexType::ID> {
 		  d_(dim),
 		  segmentThreshold_(segmentThreshold),
 		  factory_(factory) {
-		this->segments_.push_back(std::move(factory_->create()));
+		this->last_ = std::move(factory_->create());
 	}
 
 	void add(size_t n, const IDType* ids, const float* vectors) override {
 		std::lock_guard lock(this->segments_m_);
 		std::vector<std::shared_ptr<ISegment<IDType>>> inserted;
 		inserted.reserve((n / segmentThreshold_) + 1);
-		size_t last =
-			this->segments_.size() > 0 ? this->segments_.size() - 1 : 0;
 		while (n) {
 			size_t batch =
-				std::min(n, segmentThreshold_ - this->segments_.back()->size());
+				std::min(n, segmentThreshold_ - this->last_->size());
 			if (!batch) {
 				throw std::runtime_error("Empty batch in adding");
 			}
-			this->segments_.back()->addVectorBatch(batch, ids, vectors);
+			this->last_->addVectorBatch(batch, ids, vectors);
 			ids += batch;
 			vectors += (batch * d_);
 			n -= batch;
-			if (this->segments_.back()->size() == segmentThreshold_) {
-				this->segments_.push_back(std::move(factory_->create()));
-			}
-		}
-		for (size_t i = last; i < this->segments_.size(); ++i) {
-			if (this->segments_[i]->size() == segmentThreshold_) {
-				inserted.push_back(this->segments_[i]);
-				this->storage_.add(this->segments_[i]);
+			if (this->last_->size() == segmentThreshold_) {
+				inserted.push_back(this->last_);
+				this->storage_.add(this->last_);
+				this->segments_.push_back(this->last_);
+				this->last_ = std::move(factory_->create());
 			}
 		}
 		if (this->callback_ && !inserted.empty()) {
 			this->callback_.value()({}, std::move(inserted));
 		}
 		if (this->storage_.merge_predicate(segmentThreshold_)) {
-			this->storage_.merge(100);
+			this->storage_.merge(200);
 		}
 	}
 
@@ -86,6 +81,15 @@ class Index final : public IIndex<typename IndexType::ID> {
 				}
 			}
 		}
+
+		auto segmentResults = this->last_->searchQuery(query, k);
+		for (const auto& p : segmentResults) {
+			kth_stat.emplace(p.first, p.second);
+			if (kth_stat.size() > k) {
+				kth_stat.erase(*kth_stat.rbegin());
+			}
+		}
+
 		// Further logic to select top-k from combined results
 		std::vector<IDType> results;
 		for (const auto& vec : kth_stat) {
@@ -99,6 +103,7 @@ class Index final : public IIndex<typename IndexType::ID> {
 		for (size_t i = 0; i < this->segments_.size(); ++i) {
 			this->segments_[i]->deleteBatch(n, ids);
 		}
+		this->last_->deleteBatch(n, ids);
 	}
 
 	/*
