@@ -1,0 +1,27 @@
+# permissions for end users to edit vecodexsets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: vecodexset-editor-role
+rules:
+- apiGroups:
+  - apps.vecodex.link
+  resources:
+  - vecodexsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps.vecodex.link
+  resources:
+  - vecodexsets/status
+  verbs:
+  - get

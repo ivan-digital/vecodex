@@ -1,0 +1,9 @@
+apiVersion: apps.vecodex.link/v1alpha1
+kind: VecodexSet
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: vecodexset-sample
+spec:
+  # TODO(user): Add fields here

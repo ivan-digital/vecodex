@@ -1,0 +1,23 @@
+# permissions for end users to view vecodexsets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: vecodexset-viewer-role
+rules:
+- apiGroups:
+  - apps.vecodex.link
+  resources:
+  - vecodexsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.vecodex.link
+  resources:
+  - vecodexsets/status
+  verbs:
+  - get
