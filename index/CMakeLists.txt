@@ -1,160 +1,156 @@
 cmake_minimum_required(VERSION 3.12)
-
 project(vecodex-index LANGUAGES C CXX)
 
-# Set C++ standard
+# ─── C++ standard ──────────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 enable_testing()
-# Platform-specific configurations
+
+# ─── Platform-specific configurations ────────────────────────────────────────────
 if(APPLE)
     message(STATUS "Configuring for macOS")
-    # Use Apple Clang
-    # set(CMAKE_C_COMPILER "/usr/bin/clang")
-    # set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-    message(STATUS "Using Apple Clang: ${CMAKE_C_COMPILER} and ${CMAKE_CXX_COMPILER}")
+    # Detect Homebrew prefixes for LLVM/OpenMP/OpenBLAS
+    execute_process(COMMAND brew --prefix llvm
+                    OUTPUT_VARIABLE _LLVM_PREFIX
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND brew --prefix libomp
+                    OUTPUT_VARIABLE _LIBOMP_PREFIX
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND brew --prefix openblas
+                    OUTPUT_VARIABLE _OPENBLAS_PREFIX
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    # Get Homebrew prefixes
-    execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND brew --prefix openblas OUTPUT_VARIABLE OPENBLAS_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "  LLVM @ ${_LLVM_PREFIX}")
+    message(STATUS "  libomp @ ${_LIBOMP_PREFIX}")
+    message(STATUS "  OpenBLAS @ ${_OPENBLAS_PREFIX}")
 
-    # Set CMAKE_PREFIX_PATH to prioritize Homebrew
+    # Force FindOpenMP to pick up Homebrew libomp
+    set(OpenMP_C_FLAGS       "-Xpreprocessor -fopenmp" CACHE STRING "" FORCE)
+    set(OpenMP_CXX_FLAGS     "-Xpreprocessor -fopenmp" CACHE STRING "" FORCE)
+    set(OpenMP_C_LIB_NAMES   "omp" CACHE STRING "" FORCE)
+    set(OpenMP_CXX_LIB_NAMES "omp" CACHE STRING "" FORCE)
+    set(OpenMP_omp_LIBRARY   "${_LIBOMP_PREFIX}/lib/libomp.dylib" CACHE FILEPATH "" FORCE)
+
+    # Tell CMake where to look
     set(CMAKE_PREFIX_PATH
-        "${LIBOMP_PREFIX}"
-        "${OPENBLAS_PREFIX}"
-        "${CMAKE_PREFIX_PATH}"
-        CACHE STRING "CMake Prefix Path")
+        "${_LLVM_PREFIX}"
+        "${_LIBOMP_PREFIX}"
+        "${_OPENBLAS_PREFIX}"
+        ${CMAKE_PREFIX_PATH}
+        CACHE STRING "Search prefixes" FORCE)
 
-    # Include directories and library paths
     include_directories(
-        "${LIBOMP_PREFIX}/include"
-        "${OPENBLAS_PREFIX}/include"
+        "${_LIBOMP_PREFIX}/include"
+        "${_OPENBLAS_PREFIX}/include"
         "${PROJECT_SOURCE_DIR}/include"
     )
-
     link_directories(
-        "${LIBOMP_PREFIX}/lib"
-        "${OPENBLAS_PREFIX}/lib"
+        "${_LIBOMP_PREFIX}/lib"
+        "${_OPENBLAS_PREFIX}/lib"
     )
 
 elseif(UNIX)
     message(STATUS "Configuring for Linux/Ubuntu")
-
-    # Include directories
     include_directories(
         "/usr/include"
         "${PROJECT_SOURCE_DIR}/include"
+        "/usr/include/openblas"
     )
-
-    # Manually specify OpenBLAS paths for Linux/Ubuntu
-    include_directories("/usr/include/openblas")
     find_library(OpenBLAS_LIBRARIES NAMES openblas PATHS /usr/lib /usr/lib/x86_64-linux-gnu)
-
-    if(OpenBLAS_LIBRARIES)
-        message(STATUS "Found OpenBLAS: ${OpenBLAS_LIBRARIES}")
-    else()
+    if(NOT OpenBLAS_LIBRARIES)
         message(FATAL_ERROR "OpenBLAS not found")
     endif()
+    message(STATUS "Found OpenBLAS: ${OpenBLAS_LIBRARIES}")
 endif()
 
-# Common configurations
-
-# OpenMP Support
+# ─── OpenMP Support ─────────────────────────────────────────────────────────────
 find_package(OpenMP REQUIRED)
-
 if(OpenMP_FOUND)
     message(STATUS "Found OpenMP")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 else()
     message(FATAL_ERROR "OpenMP not found")
 endif()
 
-# Threading
+# ─── Threading & Boost ───────────────────────────────────────────────────────────
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS thread timer chrono)
 
-# FAISS Configuration
-# Prevent CMake from searching system paths for FAISS by not setting FAISS_ROOT or similar variables
-# Ensure FAISS is built from the submodule
-set(FAISS_ENABLE_PYTHON OFF CACHE BOOL "Disable Python support in FAISS")
-set(FAISS_ENABLE_GPU OFF CACHE BOOL "Disable GPU support in FAISS")
-set(FAISS_ENABLE_OPENMP ON CACHE BOOL "Enable OpenMP support in FAISS")
-set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
-#set(FAISS_CMAKE_C_COMPILER "${CMAKE_C_COMPILER}" CACHE FILEPATH "")
-#set(FAISS_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE FILEPATH "")
+# ─── FAISS Submodule Configuration ──────────────────────────────────────────────
+set(FAISS_ENABLE_PYTHON OFF CACHE BOOL "" FORCE)
+set(FAISS_ENABLE_GPU    OFF CACHE BOOL "" FORCE)
+set(FAISS_ENABLE_OPENMP ON  CACHE BOOL "" FORCE)
+set(BUILD_TESTING       OFF CACHE BOOL "" FORCE)
+set(FAISS_ENABLE_TESTS      OFF CACHE BOOL "" FORCE)
+set(FAISS_ENABLE_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(FAISS_ENABLE_PERF_TESTS OFF CACHE BOOL "" FORCE)
 
-# Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
-# Google Test Integration
-# ───────────────────────────────── Google Benchmark ────────────────────────────
 
-if (NOT TARGET benchmark::benchmark) 
-    include(FetchContent)
-    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-    set(BENCHMARK_INSTALL        OFF CACHE BOOL "" FORCE)
+# ─── Google Benchmark & gtest ───────────────────────────────────────────────────
+include(FetchContent)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_INSTALL        OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    googlebenchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG        v1.7.1
+)
+FetchContent_MakeAvailable(googlebenchmark)
 
-    FetchContent_Declare(
-        googlebenchmark 
-        GIT_REPOSITORY https://github.com/google/benchmark.git
-        GIT_TAG        v1.8.3 
-    )
-    FetchContent_MakeAvailable(googlebenchmark)
-endif()
-
-if (NOT TARGET gtest)
+if(NOT TARGET gtest)
     add_subdirectory(external/googletest)
 endif()
 
-# Json
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+# ─── JSON ───────────────────────────────────────────────────────────────────────
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
 FetchContent_MakeAvailable(json)
 
-# Main Library Target
+# ─── vecodex-index Library (INTERFACE) ──────────────────────────────────────────
 add_library(vecodex-index INTERFACE)
 target_link_libraries(vecodex-index INTERFACE faiss)
 target_include_directories(vecodex-index INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/baselines>
-        $<INSTALL_INTERFACE:include>
-        external/faiss)
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/baselines>
+    $<INSTALL_INTERFACE:include>
+    external/faiss
+)
 
-# Test Executable
+# ─── Unit Tests ─────────────────────────────────────────────────────────────────
 add_executable(VecodexIndexTest tests/VecodexIndexTest.cpp)
 add_test(NAME test_index_basic COMMAND VecodexIndexTest)
-
 target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
-# Link Libraries to Main Library Target
-
-# Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
-
-add_executable(Benchmark tests/Benchmark.cpp)
-target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
-
-target_link_libraries(Benchmark PRIVATE benchmark::benchmark_main Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
-
-# Additional macOS-specific settings
+target_link_libraries(VecodexIndexTest
+    PRIVATE Boost::thread Boost::timer Boost::chrono
+            nlohmann_json::nlohmann_json faiss gtest gtest_main
+            OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES}
+            vecodex-index
+)
 if(APPLE)
     target_link_libraries(VecodexIndexTest PRIVATE "-framework Accelerate")
-
-    # Set macOS specific compile options
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra)
-
-    # Set rpath for dynamic libraries if necessary
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "@loader_path/lib")
 endif()
-
-# Additional Linux-specific settings
 if(UNIX AND NOT APPLE)
     target_link_libraries(VecodexIndexTest PRIVATE pthread)
-
-    # Set Linux specific compile options
     target_compile_options(VecodexIndexTest PRIVATE -Wall -Wextra -fPIC)
-
-    # Set rpath for dynamic libraries if necessary
     set_target_properties(VecodexIndexTest PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
+
+# ─── Benchmark Executable ───────────────────────────────────────────────────────
+add_executable(Benchmark tests/Benchmark.cpp)
+target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
+target_link_libraries(Benchmark
+    PRIVATE benchmark::benchmark benchmark::benchmark_main
+            Boost::thread Boost::timer Boost::chrono
+            nlohmann_json::nlohmann_json faiss gtest
+            OpenMP::OpenMP_CXX Threads::Threads
+            ${OpenBLAS_LIBRARIES} vecodex-index
+)
