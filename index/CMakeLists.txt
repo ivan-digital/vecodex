@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(vecodex-index)
+project(vecodex-index LANGUAGES C CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -90,6 +90,17 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 # Add FAISS as a subdirectory before any find_package calls that might locate system FAISS
 add_subdirectory(external/faiss)
 # Google Test Integration
+# ───────────────────────────────── Google Benchmark ────────────────────────────
+include(FetchContent)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_INSTALL        OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  benchmark
+  GIT_REPOSITORY https://github.com/google/benchmark.git
+  GIT_TAG        v1.8.3
+)
+FetchContent_MakeAvailable(benchmark)
+
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
 endif()
@@ -102,8 +113,9 @@ FetchContent_MakeAvailable(json)
 add_library(vecodex-index INTERFACE)
 target_link_libraries(vecodex-index INTERFACE faiss)
 target_include_directories(vecodex-index INTERFACE
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/baselines
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/baselines>
+        $<INSTALL_INTERFACE:include>
         external/faiss)
 
 # Test Executable
@@ -119,7 +131,7 @@ target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread nlohma
 add_executable(Benchmark tests/Benchmark.cpp)
 target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 
-target_link_libraries(Benchmark PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(Benchmark PRIVATE benchmark::benchmark_main Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
