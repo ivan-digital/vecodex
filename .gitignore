@@ -2,6 +2,7 @@
 # CMake
 # ====================
 # Build directories
+/index/build-xcode/
 /build/
 /index/build/
 /CMakeFiles/
