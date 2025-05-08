@@ -22,7 +22,7 @@ double dist(const std::vector<double>& a) {
 	for (double x : a) {
 		ans += x * x;
 	}
-	return std::sqrtl(ans);
+	return std::sqrt(ans);
 }
 
 
