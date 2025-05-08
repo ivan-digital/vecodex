@@ -11,6 +11,8 @@ enable_testing()
 # Platform-specific configurations
 if(APPLE)
     message(STATUS "Configuring for macOS")
+    set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "" FORCE)
+    set(MATH_LIB "-framework Accelerate")
     # Use Apple Clang
     # set(CMAKE_C_COMPILER "/usr/bin/clang")
     # set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
@@ -130,12 +132,12 @@ target_include_directories(VecodexIndexTest PRIVATE ${PROJECT_SOURCE_DIR}/baseli
 # Link Libraries to Main Library Target
 
 # Link Libraries to Test Executable
-target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread Boost::chrono Boost::timer nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 add_executable(Benchmark tests/Benchmark.cpp)
 target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 
-target_link_libraries(Benchmark PRIVATE benchmark::benchmark_main Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(Benchmark PRIVATE benchmark::benchmark_main Boost::boost Boost::thread Boost::chrono Boost::timer nlohmann_json::nlohmann_json faiss OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
