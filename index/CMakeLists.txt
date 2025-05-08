@@ -92,15 +92,15 @@ add_subdirectory(external/faiss)
 # Google Test Integration
 # ───────────────────────────────── Google Benchmark ────────────────────────────
 
-if (NOT TARGET benchmark::benchmark)          # ←─ the guard
+if (NOT TARGET benchmark::benchmark) 
     include(FetchContent)
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
     set(BENCHMARK_INSTALL        OFF CACHE BOOL "" FORCE)
 
     FetchContent_Declare(
-        googlebenchmark                       # name can be anything
+        googlebenchmark 
         GIT_REPOSITORY https://github.com/google/benchmark.git
-        GIT_TAG        v1.8.3                 # pick a tag you like
+        GIT_TAG        v1.8.3 
     )
     FetchContent_MakeAvailable(googlebenchmark)
 endif()
