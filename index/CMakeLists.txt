@@ -135,11 +135,10 @@ target_link_libraries(VecodexIndexTest PRIVATE Boost::boost Boost::thread nlohma
 add_executable(Benchmark tests/Benchmark.cpp)
 target_include_directories(Benchmark PRIVATE ${PROJECT_SOURCE_DIR}/baselines)
 
-target_link_libraries(Benchmark PRIVATE benchmark::benchmark_main Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest gtest_main OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
+target_link_libraries(Benchmark PRIVATE benchmark::benchmark_main Boost::boost Boost::thread nlohmann_json::nlohmann_json faiss gtest OpenMP::OpenMP_CXX Threads::Threads ${OpenBLAS_LIBRARIES} vecodex-index)
 
 # Additional macOS-specific settings
 if(APPLE)
-    # Example: Link frameworks if needed
     target_link_libraries(VecodexIndexTest PRIVATE "-framework Accelerate")
 
     # Set macOS specific compile options
@@ -151,7 +150,6 @@ endif()
 
 # Additional Linux-specific settings
 if(UNIX AND NOT APPLE)
-    # Example: Link pthread explicitly if needed
     target_link_libraries(VecodexIndexTest PRIVATE pthread)
 
     # Set Linux specific compile options
