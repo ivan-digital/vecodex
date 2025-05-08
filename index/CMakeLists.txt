@@ -91,15 +91,19 @@ set(FAISS_BUILD_TESTS OFF CACHE BOOL "Disable FAISS tests")
 add_subdirectory(external/faiss)
 # Google Test Integration
 # ───────────────────────────────── Google Benchmark ────────────────────────────
-include(FetchContent)
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-set(BENCHMARK_INSTALL        OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-  benchmark
-  GIT_REPOSITORY https://github.com/google/benchmark.git
-  GIT_TAG        v1.8.3
-)
-FetchContent_MakeAvailable(benchmark)
+
+if (NOT TARGET benchmark::benchmark)          # ←─ the guard
+    include(FetchContent)
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_INSTALL        OFF CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(
+        googlebenchmark                       # name can be anything
+        GIT_REPOSITORY https://github.com/google/benchmark.git
+        GIT_TAG        v1.8.3                 # pick a tag you like
+    )
+    FetchContent_MakeAvailable(googlebenchmark)
+endif()
 
 if (NOT TARGET gtest)
     add_subdirectory(external/googletest)
