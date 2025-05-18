@@ -45,12 +45,7 @@ FetchContent_MakeAvailable(argparse)
 find_package(AWSSDK REQUIRED COMPONENTS core s3)
 
 # prometheus-cpp
-FetchContent_Declare(
-    prometheus-cpp
-    GIT_REPOSITORY https://github.com/jupp0r/prometheus-cpp.git
-    GIT_TAG        v1.3.0
-)
-FetchContent_MakeAvailable(prometheus-cpp)
+find_package(prometheus-cpp CONFIG REQUIRED)
 
 # Json
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)

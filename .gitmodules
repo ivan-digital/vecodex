@@ -19,3 +19,6 @@
 [submodule "index/external/asio"]
 	path = index/external/asio
 	url = https://github.com/boostorg/asio.git
+[submodule "app/external/prometheus-cpp"]
+	path = app/external/prometheus-cpp
+	url = https://github.com/jupp0r/prometheus-cpp.git

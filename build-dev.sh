@@ -27,6 +27,13 @@ cmake ../.. -DCPP_STANDARD=17 \
 make -j8 && \
 make -j8 install
 
+cd /app/external/prometheus-cpp/ && \
+mkdir -p cmake/build && \
+cd cmake/build && \
+cmake ../.. -DENABLE_TESTING=OFF && \
+make -j8 && \
+make -j8 install
+
 mkdir /build
 cd /build
 cmake -DBUILD_SHARED_LIBS=ON \
