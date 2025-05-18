@@ -22,6 +22,8 @@ WriterImpl::WriterImpl(const std::string& host, const std::string& port, const s
 grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const WriteRequest* request, WriteResponse* response) {
     std::lock_guard guard(runner_lock);
 
+    prom_exposer.IncrementCounter("requests_count", 1);
+
     updateIndexesState();
 
     std::vector<float> vec(request->data().vector_data().begin(), request->data().vector_data().end());
@@ -49,11 +51,20 @@ grpc::Status WriterImpl::ProcessWriteRequest(grpc::ServerContext* context, const
 
     std::string shard_id = chooseShard(index_id);
 
+    std::map<std::string, std::string> labels {{"index_id", index_id}, {"shard_id", shard_id}};
+    auto vec_cnt_opt = prom_exposer.GetGaugeValue<size_t>("vectors_count", labels);
+    size_t vec_cnt = 0;
+    if (vec_cnt_opt.has_value()) {
+        vec_cnt = vec_cnt_opt.value();
+    }
+
     if (attributes.find("delete") == attributes.end()) {
         shards[index_id][shard_id]->add(1, &vec_id, vec.data());
+        prom_exposer.SetGauge("vectors_count", vec_cnt + 1, labels);
     }
     else {
         shards[index_id][index_id]->erase(1, &vec_id);
+        prom_exposer.SetGauge("vectors_count", vec_cnt - 1, labels);
     }
     return grpc::Status::OK;
 }
@@ -65,6 +76,9 @@ WriterImpl::~WriterImpl() {
 void WriterImpl::indexUpdateCallback(std::vector<size_t>&& ids, std::vector<VecodexSegment>&& segs, const std::string& index_id, const std::string& shard_id) {
     auto task = [this, ids = std::move(ids), segs = std::move(segs), index_id = index_id, shard_id = shard_id] {
         std::lock_guard guard(runner_lock);
+
+        std::map<std::string, std::string> labels {{"index_id", index_id}, {"shard_id", shard_id}};
+        prom_exposer.IncrementCounter("callback_calls_count", 1, labels);
 
         std::cout << "Run callback" << std::endl;
         std::cout << "shard: [" << index_id << ", " << shard_id << "]" << std::endl;

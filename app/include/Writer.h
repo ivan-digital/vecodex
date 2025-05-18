@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <thread>
 
+#include "utils/PrometheusExposer.h"
+
 #include <boost/asio.hpp>
 
 #include "IIndex.h"
@@ -49,6 +51,7 @@ private:
 
     EtcdClient etcd_client;
     StorageClient storage_client;
+    PrometheusExposer prom_exposer;
 
     boost::asio::thread_pool callback_runner;
     std::mutex runner_lock;
