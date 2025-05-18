@@ -44,6 +44,14 @@ FetchContent_MakeAvailable(argparse)
 # AWS SDK
 find_package(AWSSDK REQUIRED COMPONENTS core s3)
 
+# prometheus-cpp
+FetchContent_Declare(
+    prometheus-cpp
+    GIT_REPOSITORY https://github.com/jupp0r/prometheus-cpp.git
+    GIT_TAG        v1.3.0
+)
+FetchContent_MakeAvailable(prometheus-cpp)
+
 # Json
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
@@ -96,7 +104,7 @@ foreach(FIL ${PROTO_FILES})
              "${PROTO_BINARY_DIR}/${FIL_WE}.pb.h"
       COMMAND  ${_PROTOBUF_PROTOC}
       ARGS --grpc_out=${PROTO_BINARY_DIR}
-           --cpp_out=${PROTO_BINARY_DIR} 
+           --cpp_out=${PROTO_BINARY_DIR}
            --plugin=protoc-gen-grpc=${_GRPC_CPP_PLUGIN_EXECUTABLE}
            --proto_path=${PROTO_SOURCE_DIR}
             ${FIL}
@@ -119,17 +127,20 @@ file(GLOB SRC_LIST src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-target_link_libraries(${PROJECT_NAME} 
-  argparse 
-  ${_PROTOBUF_LIBPROTOBUF} 
-  ${_REFLECTION} 
-  ${_GRPC_GRPCPP} 
-  proto-objects 
-  etcd-cpp-api 
+target_link_libraries(${PROJECT_NAME}
+  argparse
+  ${_PROTOBUF_LIBPROTOBUF}
+  ${_REFLECTION}
+  ${_GRPC_GRPCPP}
+  proto-objects
+  etcd-cpp-api
   nlohmann_json::nlohmann_json
   aws-cpp-sdk-core
   aws-cpp-sdk-s3
-) 
+  prometheus-cpp::core
+  prometheus-cpp::pull
+  prometheus-cpp::push
+)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROTO_BINARY_DIR} ${PROJECT_SOURCE_DIR}/external/etcd-cpp-apiv3)
 
 # Example client
