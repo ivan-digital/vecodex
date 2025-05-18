@@ -8,6 +8,8 @@
 #include "Base.h"
 #include "StorageClient.h"
 
+#include "utils/PrometheusExposer.h"
+
 #include "IIndex.h"
 #include "ISegment.h"
 #include "IndexFactory.h"
@@ -38,6 +40,7 @@ private:
     std::string port;
     EtcdClient etcd_client;
     StorageClient storage_client;
+    PrometheusExposer prom_exposer;
 
     // [index_id][shard_id]
     std::unordered_map<std::string, std::unordered_map<std::string, VecodexIndex>> shards;

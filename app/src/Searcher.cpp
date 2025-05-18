@@ -26,6 +26,8 @@ SearcherImpl::~SearcherImpl() {
 grpc::Status SearcherImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
     std::cout << "Hello from Searcher Server!" << std::endl;
 
+    prom_exposer.IncrementCounter("requests_count", 1);
+
     std::vector<float> query(request->vector_data().begin(), request->vector_data().end());
     int k = request->k();
 
@@ -60,6 +62,9 @@ grpc::Status SearcherImpl::ProcessUpdateRequest(grpc::ServerContext* context, co
 
     std::string index_id = request->index_id();
     std::string shard_id = request->shard_id();
+
+    std::map<std::string, std::string> labels {{"index_id", index_id}, {"shard_id", shard_id}};
+    prom_exposer.IncrementCounter("updates_count", 1, labels);
 
     std::cout << "Received update\n";
     std::cout << "Shard [" << index_id << ", " << shard_id << "]" << std::endl;
