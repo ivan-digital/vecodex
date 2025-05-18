@@ -14,6 +14,7 @@
 #include "Base.h"
 
 #include "utils/Stats.h"
+#include "utils/PrometheusExposer.h"
 
 using service::SearchRequest;
 using service::SearchResponse;
@@ -39,6 +40,7 @@ private:
     std::unordered_map<std::string, ShardToSearcher> searchers_map; // index_id -> shard_id -> searcher_client 
     std::unordered_map<std::string, ShardToStats> searchers_stats; // index_id -> shard_id -> stats_manager 
     EtcdClient etcd_client;
+    PrometheusExposer prom_exposer;
     std::mutex mutex_;
 private:
     SearcherClient CreateSearcherClient(const std::string& addr) const;
