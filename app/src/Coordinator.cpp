@@ -19,7 +19,9 @@ CoordinatorImpl::CoordinatorImpl(const std::string& etcd_addr)
 
 grpc::Status CoordinatorImpl::ProcessSearchRequest(grpc::ServerContext* context, const SearchRequest* request, SearchResponse* response) {
     std::cout << "Hello from Coordinator Server!" << std::endl;
-    
+
+    prom_exposer.IncrementCounter("requests_count", 1);
+
     std::lock_guard guard(mutex_);
 
     UpdateSearchersState(request);
@@ -105,6 +107,11 @@ void CoordinatorImpl::UpdateStateIfNeeded(const std::string& index_id, const std
         return;
     }
     if (stats.GetResponsesCount() % kRequestsToNextUpdate == 0) {
+        std::map<std::string, std::string> labels {{"index_id", index_id}, {"shard_id", shard_id}};
+        prom_exposer.SetGauge("requests_shard_count", stats.GetResponsesCount(), labels);
+        prom_exposer.SetGauge("errors_count", stats.GetErrorsCount(), labels);
+        prom_exposer.SetGauge("request_latency_avg", stats.GetAverageResponseTime(), labels);
+
         etcd_client.UpdateAverageResponseTime(index_id, shard_id, stats.GetAverageResponseTime());
     }
 }

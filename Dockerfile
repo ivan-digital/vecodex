@@ -31,6 +31,13 @@ RUN cd /app/external/aws-cpp-sdk/ && \
     make -j8 && \
     make -j8 install
 
+RUN cd /app/external/prometheus-cpp/ && \
+    mkdir -p cmake/build && \
+    cd cmake/build && \
+    cmake ../.. -DENABLE_TESTING=OFF && \
+    make -j8 && \
+    make -j8 install
+
 COPY ./build.sh /
 COPY ./app/CMakeLists.txt /app/
 COPY ./app/examples/ /app/examples/
