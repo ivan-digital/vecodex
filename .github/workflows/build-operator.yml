@@ -1,0 +1,32 @@
+name: Build Operator
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'kube-operator/**'
+      - '.github/workflows/build-operator.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'kube-operator/**'
+      - '.github/workflows/build-operator.yml'
+
+jobs:
+  build_operator:
+    name: Build Kubernetes Operator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'kube-operator/go.mod'
+          cache-dependency-path: 'kube-operator/go.sum'
+
+      - name: Build operator Docker image
+        working-directory: ./kube-operator
+        run: make docker-build IMG=ghcr.io/${{ github.repository_owner }}/vecodex-operator:git-${{ github.sha }}
+        
