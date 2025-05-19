@@ -1,0 +1,47 @@
+apiVersion: apps.vecodex.link/v1alpha1
+kind: VecodexSet
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: vecodexset-sample
+spec:
+  coordinator:
+    image: "ghcr.io/ivan-digital/vecodex/app:latest"
+    command: ["/app/cmake/build/vecodex-app", "coordinator"]
+    # args: ["--listening-port", "44400"] # Example arg
+    replicas: 1
+    resources:
+      requests:
+        cpu: "125m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+  writer:
+    image: "ghcr.io/ivan-digital/vecodex/app:latest"
+    command: ["/app/cmake/build/vecodex-app", "writer"]
+    # args: ["--config", "/path/to/writer_config.json"] # Example arg
+    replicas: 1
+    resources:
+      requests:
+        cpu: "125m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+        # nvidia.com/gpu: "1" # Example GPU request
+  searcher:
+    image: "ghcr.io/ivan-digital/vecodex/app:latest"
+    command: ["/app/cmake/build/vecodex-app", "searcher"]
+    # args: ["--config", "/path/to/searcher_config.json"] # Example arg
+    replicas: 3
+    resources:
+      requests:
+        cpu: "125m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+  ingress:
+    host: "search.vecodex.link"
