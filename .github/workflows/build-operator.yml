@@ -80,7 +80,18 @@ jobs:
 
       - name: Set up KinD cluster
         uses: helm/kind-action@v1.10.0
+        with:
+          wait: 60s # Add wait for cluster to be ready
        
+      - name: Verify KinD cluster
+        run: |
+          echo "Listing KinD clusters:"
+          kind get clusters
+          echo "\nkubectl cluster-info:"
+          kubectl cluster-info
+          echo "\nkubectl get nodes:"
+          kubectl get nodes
+
       - name: Load Docker image into KinD cluster
         run: kind load docker-image ${{ env.IMAGE_NAME }}:${{ needs.build_operator.outputs.image_tag }} --name kind
 
