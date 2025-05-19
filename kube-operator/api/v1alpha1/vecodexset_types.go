@@ -30,8 +30,8 @@ type VecodexSetSpec struct {
 }
 
 type NodeSpec struct {
-	Image    string `json:"image"`
-	Replicas *int32 `json:"replicas"`
+	Image    string   `json:"image"`
+	Replicas *int32   `json:"replicas"`
 	Command  []string `json:"command,omitempty"` // Added command field
 	// +kubebuilder:default:={"requests":{"cpu":"100m","memory":"128Mi"},"limits":{"cpu":"100m","memory":"128Mi"}}
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
